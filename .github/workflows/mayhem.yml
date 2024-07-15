@@ -61,7 +61,7 @@ jobs:
       uses: forallsecure/mcode-action@v1
       with:
         mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        owner: forallsecure
+        owner: forallsecure-demo
         args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         sarif-output: code.sarif
 
@@ -81,7 +81,7 @@ jobs:
       continue-on-error: true
       with:
         mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        target: forallsecure/gps-telemetry/api
+        target: forallsecure-demo/gps-telemetry/api
         api-url: http://localhost:8000
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
@@ -94,9 +94,9 @@ jobs:
         sarif_file: api.sarif
 
     - name: Run Dynamic SBOM scan
-      run: mdsbom scout redis:alpine --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --workspace forallsecure
+      run: mdsbom scout redis:alpine --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --workspace forallsecure-demo
 
-      # run the following whtn the dsbom.sarif file is generated
+    # run the following whtn the dsbom.sarif file is generated
     - name: Patch docker scout SARIF report for CodeQL
       run : |
         if [ -f dsbom.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
@@ -105,8 +105,6 @@ jobs:
             if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom.sarif > dsbom-patched.sarif; fi
         touch dsbom-patched.sarif
 
-
-    # upload artifact of the dsbom-patched.sarif file
     - name: Upload SARIF file(s)
       uses: actions/upload-artifact@v2
       with:
