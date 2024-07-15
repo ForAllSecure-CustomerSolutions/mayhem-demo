@@ -94,7 +94,7 @@ jobs:
         sarif_file: api.sarif
 
     - name: Run Dynamic SBOM scan
-      run: mdsbom scout redis:alpine --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --workspace forallsecure-demo
+      run: mdsbom scout ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --workspace forallsecure-demo
 
     # run the following whtn the dsbom.sarif file is generated
     - name: Patch docker scout SARIF report for CodeQL
