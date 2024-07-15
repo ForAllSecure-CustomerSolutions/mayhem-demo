@@ -9,7 +9,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository.toLowerCase() }}
 
 jobs:
 
@@ -18,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: lowercase github.repository
+      run: echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
+    
     # checkout repository
     - uses: actions/checkout@v3
       with:
