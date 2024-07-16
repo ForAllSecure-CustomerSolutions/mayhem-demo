@@ -54,8 +54,8 @@ jobs:
 
     - name: Push and bring up the app
       run: |
-        docker compose push
-        docker compose up -d --wait
+        SHA=${{ github.sha }} docker compose push
+        SHA=${{ github.sha }} docker compose up -d --wait
 
 
     - name: Wait for the API to be up
