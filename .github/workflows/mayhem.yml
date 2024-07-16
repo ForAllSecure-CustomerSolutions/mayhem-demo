@@ -54,10 +54,11 @@ jobs:
         SHA=${{ github.sha }} docker compose push -q
 
     - name: Bring up the app
-      run: |
+      run: | 
         SHA=${{ github.sha }} docker compose up -d --wait
-        SHA=${{ github.sha }} docker compose down
-        SHA=${{ github.sha }} docker compose up -d --wait
+        container_id=$(docker run -q -d ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }})
+        sleep 5
+        docker stop $container_id
 
     - name: Wait for the API to be up
       run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
@@ -91,6 +92,9 @@ jobs:
       uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: api.sarif
+
+    - name: Bring down the app
+      run: SHA=${{ github.sha }} docker compose down
 
     - name: Run Dynamic SBOM scan
       run: mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --workspace forallsecure-demo
