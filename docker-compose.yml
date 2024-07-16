@@ -16,7 +16,7 @@ services:
       - api
 
   redis:
-    image: "forallsecuredev/redis:latest"
+    image: "forallsecuredevbot/redis:latest"
     ports:
       - "6379:6379"
 
