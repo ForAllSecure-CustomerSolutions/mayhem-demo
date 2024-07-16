@@ -1,6 +1,7 @@
 services:
   api:
     build: ./api
+    image: "ghcr.io/forallsecure-customersolutions/gps_telemetry/api:${SHA:-latest}"
     ports:
       - "8000:8000"
     depends_on:
@@ -8,17 +9,19 @@ services:
 
   ui:
     build: ./ui
+    image: "ghcr.io/forallsecure-customersolutions/gps_telemetry/ui:${SHA:-latest}"
     ports:
       - "3000:3000"
     depends_on:
       - api
 
   redis:
-    image: "redis:alpine"
+    image: "forallsecuredev/redis:latest"
     ports:
       - "6379:6379"
 
   on_car:
     build: ./car
+    image: "ghcr.io/forallsecure-customersolutions/gps_telemetry/car:${SHA:-latest}"
     depends_on:
       - api

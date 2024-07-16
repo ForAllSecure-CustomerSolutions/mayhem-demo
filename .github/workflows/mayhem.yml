@@ -18,7 +18,7 @@ jobs:
 
     steps:
     - name: lowercase github.repository
-      run: echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
+      run: echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     
     # checkout repository
     - uses: actions/checkout@v3
@@ -47,34 +47,27 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push the target image
-      id: push
-      uses: docker/build-push-action@v5
-      with:
-        context: car
-        file: car/Dockerfile
-        push: true
-        # tag the image with the commit SHA
-        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+    - name: Build, push and bring up the app
+      run: |
+        SHA=${{ github.sha }} docker compose build
+        docker compose push
+        docker compose up -d --wait
+
+    - name: Wait for the API to be up
+      run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
 
     - name: Start Code analysis
       uses: forallsecure/mcode-action@v1
       with:
         mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
         owner: forallsecure-demo
-        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/gps_telemetry/car:${{ github.sha }}
         sarif-output: code.sarif
 
     - name: Upload SARIF file(s)
       uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: code.sarif
-
-    - name: Bring up the API
-      run: docker compose up -d
-
-    - name: Wait for the API to be up
-      run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
 
     - name: Start API analysis
       uses: forallsecure/mapi-action@v1
@@ -94,7 +87,7 @@ jobs:
         sarif_file: api.sarif
 
     - name: Run Dynamic SBOM scan
-      run: mdsbom scout ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --workspace forallsecure-demo
+      run: mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/gps_telemetry/car:${{ github.sha }} --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --workspace forallsecure-demo
 
     # run the following whtn the dsbom.sarif file is generated
     - name: Patch docker scout SARIF report for CodeQL
