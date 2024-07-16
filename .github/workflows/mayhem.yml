@@ -47,11 +47,16 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build, push and bring up the app
+    - name: Build the app
       run: |
+        docker compose pull --ignore-buildable -q
         SHA=${{ github.sha }} docker compose build
+
+    - name: Push and bring up the app
+      run: |
         docker compose push
         docker compose up -d --wait
+
 
     - name: Wait for the API to be up
       run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
