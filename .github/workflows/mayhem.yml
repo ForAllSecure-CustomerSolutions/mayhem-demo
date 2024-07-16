@@ -85,7 +85,7 @@ jobs:
         api-url: http://localhost:8000
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
-        args: -f api/Mayhemfile --experimental-rules --duration 300 --url http://localhost:8000/openapi.json
+        run-args: --experimental-rules
         sarif-output: sarif
 
     - name: Upload SARIF file(s)
