@@ -57,11 +57,12 @@ jobs:
         upstream_url = "https://app.mayhem.security/"
         workspace = "forallsecure-demo"
         ' | sudo tee -a /etc/mdsbom/config.toml
+        cat /etc/mdsbom/config.toml
  
     - name: Restart services
       run: |
-        sudo systemctl restart docker
-        sudo systemctl restart mdsbom
+        sudo systemctl restart docker || sudo journalctl -xeu docker
+        sudo systemctl restart mdsbom || sudo journalctl -xeu mdsbom
 
     - name: MDSBOM login
       run: mdsbom login https://app.mayhem.security ${{ secrets.MAYHEM_TOKEN }}
