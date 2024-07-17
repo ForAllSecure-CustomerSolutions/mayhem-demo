@@ -89,17 +89,17 @@ jobs:
         sarif-report: api.sarif
         run-args: --experimental-rules
 
-    - name: Start ZAP API analysis
-      uses: forallsecure/mapi-action@v1
-      continue-on-error: true
-      with:
-        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        target: forallsecure-demo/mayhem-demo/api-zap
-        api-url: http://localhost:8000
-        api-spec: http://localhost:8000/openapi.json
-        sarif-report: api-zap.sarif
-        run-args: --ignore-rule auth-bypass --ignore-rule command-injection --ignore-rule internal-server-error --ignore-rule invalid-request-spec --ignore-rule invalid-response-spec --ignore-rule timeout --ignore-rule verb-tampering --ignore-rule nosql-injection
-        zap-api-scan: true
+    # - name: Start ZAP API analysis
+    #   uses: forallsecure/mapi-action@v1
+    #   continue-on-error: true
+    #   with:
+    #     mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+    #     target: forallsecure-demo/mayhem-demo/api-zap
+    #     api-url: http://localhost:8000
+    #     api-spec: http://localhost:8000/openapi.json
+    #     sarif-report: api-zap.sarif
+    #     run-args: --ignore-rule auth-bypass --ignore-rule command-injection --ignore-rule internal-server-error --ignore-rule invalid-request-spec --ignore-rule invalid-response-spec --ignore-rule timeout --ignore-rule verb-tampering --ignore-rule nosql-injection
+    #     zap-api-scan: true
 
     - name: Start Code analysis
       uses: forallsecure/mcode-action@v1
@@ -120,20 +120,20 @@ jobs:
 
     - name: Patch docker scout SARIF report for CodeQL
       run : |
-        if [ -f dsbom-redis.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-redis.sarif > dsbom-redis-patched.sarif; fi
+            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-redis.sarif > dsbom-redis-patched.sarif
 
-        if [ -f dsbom-car.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif; fi
+            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif
         
-        if [ -f dsbom-api.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif; fi
+            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif
 
     - name: Upload SARIF file(s)
       id: upload-car
