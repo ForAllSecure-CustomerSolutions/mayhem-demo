@@ -78,14 +78,6 @@ jobs:
     - name: Wait for the API to be up
       run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
 
-    - name: Start Code analysis
-      uses: forallsecure/mcode-action@v1
-      with:
-        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        owner: forallsecure-demo
-        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
-        sarif-output: code.sarif
-
     - name: Start API analysis
       uses: forallsecure/mapi-action@v1
       continue-on-error: true
@@ -96,7 +88,6 @@ jobs:
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
         run-args: --experimental-rules
-        sarif-output: sarif
 
     - name: Start ZAP API analysis
       uses: forallsecure/mapi-action@v1
@@ -107,8 +98,16 @@ jobs:
         api-url: http://localhost:8000
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api-zap.sarif
-        run-args: --zap --ignore-rule auth-bypass --ignore-rule command-injection --ignore-rule internal-server-error --ignore-rule invalid-request-spec --ignore-rule invalid-response-spec) --ignore-rule timeout --ignore-rule verb-tampering --ignore-rule nosql-injection
-        sarif-output: sarif
+        run-args: --ignore-rule auth-bypass --ignore-rule command-injection --ignore-rule internal-server-error --ignore-rule invalid-request-spec --ignore-rule invalid-response-spec --ignore-rule timeout --ignore-rule verb-tampering --ignore-rule nosql-injection
+        zap-api-scan: true
+
+    - name: Start Code analysis
+      uses: forallsecure/mcode-action@v1
+      with:
+        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+        owner: forallsecure-demo
+        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
+        sarif-output: code.sarif
 
     - name: Bring down the app
       run: SHA=${{ github.sha }} docker compose down
