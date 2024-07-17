@@ -118,37 +118,64 @@ jobs:
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
             if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-redis.sarif > dsbom-redis-patched.sarif; fi
-        rm dsbom-redis.sarif
 
         if [ -f dsbom-car.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
             if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif; fi
-        rm dsbom-car.sarif
         
         if [ -f dsbom-api.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
             if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif; fi
-        rm dsbom-api.sarif
 
     - name: Upload SARIF file(s)
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: results
         path: ./*.sarif
 
     - name: Upload SARIF file(s)
-      id: upload
+      id: upload-car
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: ./
+        sarif_file: dsbom-car-patched.sarif
+
+    - name: Upload SARIF file(s)
+      id: upload-api
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: dsbom-api-patched.sarif
+
+    - name: Upload SARIF file(s)
+      id: upload-redis
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: dsbom-redis-patched.sarif
 
     - name: Dismiss issues that were not observed at runtime
       uses: advanced-security/dismiss-alerts@v1
       with:
         # specify a 'sarif-id' and 'sarif-file'
-        sarif-id: ${{ steps.upload.outputs.sarif-id }}
-        sarif-file: dsbom-patched.sarif
+        sarif-id: ${{ steps.upload-redis.outputs.sarif-id }}
+        sarif-file: dsbom-redis-patched.sarif
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Dismiss issues that were not observed at runtime
+      uses: advanced-security/dismiss-alerts@v1
+      with:
+        # specify a 'sarif-id' and 'sarif-file'
+        sarif-id: ${{ steps.upload-api.outputs.sarif-id }}
+        sarif-file: dsbom-api-patched.sarif
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Dismiss issues that were not observed at runtime
+      uses: advanced-security/dismiss-alerts@v1
+      with:
+        # specify a 'sarif-id' and 'sarif-file'
+        sarif-id: ${{ steps.upload-car.outputs.sarif-id }}
+        sarif-file: dsbom-car-patched.sarif
       env:
         GITHUB_TOKEN: ${{ github.token }}
