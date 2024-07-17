@@ -54,7 +54,7 @@ jobs:
       run: sudo systemctl restart docker.service
 
     - name: MDSBOM login
-      run: mdsbom login https://app.mayhem.security  ${{ secrets.MAYHEM_TOKEN }}
+      run: mdsbom login https://app.mayhem.security ${{ secrets.MAYHEM_TOKEN }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -91,7 +91,7 @@ jobs:
       continue-on-error: true
       with:
         mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        target: forallsecure-demo/gps-telemetry/api
+        target: forallsecure-demo/mayhem-demo/api
         api-url: http://localhost:8000
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
