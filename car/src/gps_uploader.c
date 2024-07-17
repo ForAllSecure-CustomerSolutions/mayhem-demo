@@ -138,14 +138,14 @@ int main(int argc, char* argv[])
   double latitude = 0.0, longitude = 0.0, time = 0.0;
 
   if (argc != 2 && argc != 3) {
-    printf("Usage: %s <nmea_data_file>\n", argv[0]);
+    printf("Usage: %s <nmea_data_file> <URL>\n", argv[0]);
     return 1;
   }
 
   GPS_FILE_PATH = argv[1];
 
   if (argc == 3) {
-    URL = argv[3];
+    URL = argv[2];
   }
 
   FILE* file = fopen(GPS_FILE_PATH, "r");
