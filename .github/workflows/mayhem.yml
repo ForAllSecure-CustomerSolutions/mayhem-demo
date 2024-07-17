@@ -51,7 +51,11 @@ jobs:
         }' | sudo tee /etc/docker/daemon.json > /dev/null
 
     - name: Restart Docker service
-      run: sudo systemctl restart docker
+      run: |
+        cat /etc/docker/daemon.json
+        sudo systemctl status docker.service
+        sudo systemctl restart docker.service
+        sudo systemctl status docker.service
 
     - name: MDSBOM login
       run: mdsbom login https://app.mayhem.security  ${{ secrets.MAYHEM_TOKEN }}
