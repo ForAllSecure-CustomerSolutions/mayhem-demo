@@ -98,7 +98,7 @@ jobs:
         sarif-output: code.sarif
 
     - name: Upload SARIF file(s)
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: code.sarif
 
@@ -115,7 +115,7 @@ jobs:
         sarif-output: sarif
 
     - name: Upload SARIF file(s)
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: api.sarif
 
@@ -134,28 +134,31 @@ jobs:
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
             if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-redis.sarif > dsbom-redis-patched.sarif; fi
+        rm dsbom-redis.sarif
 
         if [ -f dsbom-car.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
             if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif; fi
-
+        rm dsbom-car.sarif
+        
         if [ -f dsbom-api.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
             if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif; fi
+        rm dsbom-api.sarif
 
     - name: Upload SARIF file(s)
       uses: actions/upload-artifact@v2
       with:
-        name: dsbom-results
-        path: dsbom-*-patched.sarif
+        name: results
+        path: ./*.sarif
 
     - name: Upload SARIF file(s)
       id: upload
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: dsbom-*-patched.sarif
+        sarif_file: ./
 
     - name: Dismiss issues that were not observed at runtime
       uses: advanced-security/dismiss-alerts@v1
