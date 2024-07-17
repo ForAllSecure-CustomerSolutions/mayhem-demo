@@ -74,11 +74,7 @@ jobs:
         SHA=${{ github.sha }} docker compose push -q
 
     - name: Bring up the app
-      run: | 
-        SHA=${{ github.sha }} docker compose up -d --wait
-        container_id=$(docker run -q -d ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }})
-        sleep 15
-        docker stop $container_id
+      run: SHA=${{ github.sha }} docker compose up -d --wait
 
     - name: Wait for the API to be up
       run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
