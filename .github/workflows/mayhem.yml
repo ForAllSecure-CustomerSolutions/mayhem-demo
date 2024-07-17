@@ -34,9 +34,8 @@ jobs:
     - name: Install mdsbom
       run: curl -sSL https://app.mayhem.security/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
 
-    - name: Update /etc/docker/daemon.json
+    - name: Update /etc/docker/daemon.json to use mdsbom
       run: |
-        which mdsbom
         echo '{
           "runtimes": {
             "mdsbom": {
@@ -53,13 +52,7 @@ jobs:
 
     - name: Restart Docker service
       run: |
-        cat /etc/docker/daemon.json
-        sudo systemctl status docker.service
-        sudo systemctl restart docker.service || true
-
-    - name: Startup log
-      run: | 
-        sudo journalctl -xeu docker.service
+        sudo systemctl restart docker.service
 
     - name: MDSBOM login
       run: mdsbom login https://app.mayhem.security  ${{ secrets.MAYHEM_TOKEN }}
@@ -131,30 +124,38 @@ jobs:
 
     - name: Run Dynamic SBOM scan
       run: | 
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --local
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --local
-        sudo -u $USER mdsbom scout forallsecuredevbot/redis:latest --sca-report-out dsbom.sarif --sca-summary-csv dsbom.json --local
+        mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --local
+        mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --local
+        mdsbom scout forallsecuredevbot/redis:latest --sca-report-out dsbom-redis.sarif --local
 
-    # run the following whtn the dsbom.sarif file is generated
     - name: Patch docker scout SARIF report for CodeQL
       run : |
-        if [ -f dsbom.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+        if [ -f dsbom-redis.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom.sarif > dsbom-patched.sarif; fi
-        touch dsbom-patched.sarif
+            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-redis.sarif > dsbom-redis-patched.sarif; fi
+
+        if [ -f dsbom-car.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+            if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
+            if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
+            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif; fi
+
+        if [ -f dsbom-api.sarif ]; then jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+            if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
+            if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
+            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif; fi
 
     - name: Upload SARIF file(s)
       uses: actions/upload-artifact@v2
       with:
-        name: dsbom-patched-sarif
-        path: dsbom-patched.sarif
+        name: dsbom-results
+        path: dsbom-*-patched.sarif
 
     - name: Upload SARIF file(s)
       id: upload
       uses: github/codeql-action/upload-sarif@v2
       with:
-        sarif_file: dsbom-patched.sarif
+        sarif_file: dsbom-*-patched.sarif
 
     - name: Dismiss issues that were not observed at runtime
       uses: advanced-security/dismiss-alerts@v1
