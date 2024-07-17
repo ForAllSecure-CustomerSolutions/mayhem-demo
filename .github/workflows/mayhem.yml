@@ -36,10 +36,11 @@ jobs:
 
     - name: Update /etc/docker/daemon.json
       run: |
+        which mdsbom
         echo '{
           "runtimes": {
             "mdsbom": {
-              "path": "/opt/forallsecure/bin/mdsbom",
+              "path": "/usr/bin/mdsbom",
               "runtimeArgs": [
                 "runc",
                 "--",
