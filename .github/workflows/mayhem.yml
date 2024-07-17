@@ -34,6 +34,25 @@ jobs:
     - name: Install mdsbom
       run: curl -sSL https://app.mayhem.security/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
 
+    - name: Update /etc/docker/daemon.json
+      run: |
+        echo '{
+          "runtimes": {
+            "mdsbom": {
+              "path": "/opt/forallsecure/bin/mdsbom",
+              "runtimeArgs": [
+                "runc",
+                "--",
+                "runc"
+              ]
+            }
+          },
+          "default-runtime": "mdsbom"
+        }' | sudo tee /etc/docker/daemon.json > /dev/null
+
+    - name: Restart Docker service
+      run: sudo systemctl restart docker
+
     - name: MDSBOM login
       run: mdsbom login https://app.mayhem.security  ${{ secrets.MAYHEM_TOKEN }}
 
