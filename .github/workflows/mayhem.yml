@@ -73,12 +73,6 @@ jobs:
         SHA=${{ github.sha }} docker compose build
         SHA=${{ github.sha }} docker compose push -q
 
-    - name: Run redis
-      run: |
-        container_id=$(docker run -q -d forallsecuredevbot/redis:latest)
-        sleep 15
-        docker stop $container_id
-
     - name: Bring up the app
       run: | 
         SHA=${{ github.sha }} docker compose up -d --wait
@@ -97,11 +91,6 @@ jobs:
         args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
         sarif-output: code.sarif
 
-    - name: Upload SARIF file(s)
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: code.sarif
-
     - name: Start API analysis
       uses: forallsecure/mapi-action@v1
       continue-on-error: true
@@ -113,11 +102,6 @@ jobs:
         sarif-report: api.sarif
         run-args: --experimental-rules
         sarif-output: sarif
-
-    - name: Upload SARIF file(s)
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: api.sarif
 
     - name: Bring down the app
       run: SHA=${{ github.sha }} docker compose down
