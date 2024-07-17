@@ -53,11 +53,17 @@ jobs:
         SHA=${{ github.sha }} docker compose build
         SHA=${{ github.sha }} docker compose push -q
 
+    - name: Run redis
+      run: |
+        container_id=$(docker run -q -d forallsecuredevbot/redis:latest)
+        sleep 15
+        docker stop $container_id
+
     - name: Bring up the app
       run: | 
         SHA=${{ github.sha }} docker compose up -d --wait
         container_id=$(docker run -q -d ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }})
-        sleep 5
+        sleep 15
         docker stop $container_id
 
     - name: Wait for the API to be up
