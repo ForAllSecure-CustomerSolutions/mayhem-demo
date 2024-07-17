@@ -57,7 +57,9 @@ jobs:
         sudo systemctl restart docker.service || true
 
     - name: Startup log
-      run: sudo systemctl status docker.service
+      run: | 
+        sudo systemctl status docker.service
+        sudo journalctl -xeu docker.service
 
     - name: MDSBOM login
       run: mdsbom login https://app.mayhem.security  ${{ secrets.MAYHEM_TOKEN }}
