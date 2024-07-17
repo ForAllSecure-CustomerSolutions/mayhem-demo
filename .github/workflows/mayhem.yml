@@ -53,11 +53,10 @@ jobs:
     - name: Setup sync
       run: |
         echo '[sync]
-        api_token = ${{ secrets.MAYHEM_TOKEN }}
+        api_token = "${{ secrets.MAYHEM_TOKEN }}"
         upstream_url = "https://app.mayhem.security/"
         workspace = "forallsecure-demo"
         ' | sudo tee -a /etc/mdsbom/config.toml
-        cat /etc/mdsbom/config.toml
  
     - name: Restart services
       run: |
