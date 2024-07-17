@@ -50,8 +50,18 @@ jobs:
           "default-runtime": "mdsbom"
         }' | sudo tee /etc/docker/daemon.json > /dev/null
 
-    - name: Restart Docker service
-      run: sudo systemctl restart docker.service
+    - name: Setup sync
+      run: |
+        echo '[sync]
+        api_token = ${{ secrets.MAYHEM_TOKEN }}
+        upstream_url = "https://app.mayhem.security/"
+        workspace = "forallsecure-demo"
+        ' | sudo tee -a /etc/mdsbom/config.toml
+ 
+    - name: Restart services
+      run: |
+        sudo systemctl restart docker
+        sudo systemctl restart mdsbom
 
     - name: MDSBOM login
       run: mdsbom login https://app.mayhem.security ${{ secrets.MAYHEM_TOKEN }}
