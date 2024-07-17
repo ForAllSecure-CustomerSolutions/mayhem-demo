@@ -58,7 +58,6 @@ jobs:
 
     - name: Startup log
       run: | 
-        sudo systemctl status docker.service
         sudo journalctl -xeu docker.service
 
     - name: MDSBOM login
