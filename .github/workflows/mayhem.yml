@@ -54,7 +54,7 @@ jobs:
       run: |
         cat /etc/docker/daemon.json
         sudo systemctl status docker.service
-        sudo systemctl restart docker.service
+        sudo systemctl restart docker.service || true
 
     - name: Startup log
       run: sudo systemctl status docker.service
