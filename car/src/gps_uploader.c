@@ -13,7 +13,8 @@ void stack_exhaustion() {
 
 void vulnerable_c(char* line, int latitude, int longitude) {
 
-  volatile int size1, size2, size3, size4;
+  volatile int size1, size2, size4;
+  volatile unsigned int size3;
 
   // A bit of computation on our inputs. 
   if (latitude < 0) {
