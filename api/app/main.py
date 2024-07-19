@@ -1,22 +1,25 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import json
-import requests
 import os
 import sqlite3
 import logging
 import traceback
 from redis import Redis
 from app.config import settings
+from os.path import isfile
+from typing import Annotated
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 app = FastAPI()
+security = HTTPBasic()
 
 # Set up database
-con = sqlite3.connect(':memory:')
+con = sqlite3.connect(':memory:', check_same_thread=False)
 
 # Setup CORS
 app.add_middleware(
@@ -34,7 +37,6 @@ logger = logging.getLogger(__name__)
 # Initialize Redis
 redis_client = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
-
 @app.exception_handler(Exception)
 async def unicorn_exception_handler(request: Request, exc: Exception):
     traceback_str = "".join(traceback.format_exception(None, exc, exc.__traceback__))
@@ -42,7 +44,6 @@ async def unicorn_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"message": "An unexpected error occurred", "detail": traceback_str},
     )
-
 
 @app.on_event("startup")
 async def startup_event():
@@ -61,32 +62,49 @@ class Location(BaseModel):
     latitude: float
     longitude: float
 
-# SQL injection on the login route.
-@app.post("/login")
-async def login(user: UserLogin):
-    logger.info(f"Login attempt for email: {user.email}")
+def get_current_username(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
+    logger.info(f"Login attempt for email: {credentials.username}")
     cur = con.cursor()
     # SQL injection!
-    cur.execute("SELECT * FROM users WHERE email = '%s' and password = '%s'" % (user.email, user.password))
+    cur.execute("SELECT * FROM users WHERE email = '%s' and password = '%s'" % (credentials.username, credentials.password))
     if cur.fetchone() is not None:
-        logger.info(f"Login successful for email: {user.email}")
-        return {"message": "Login successful"}
+        logger.info(f"Login successful for email: {credentials.username}")
+        return credentials.username
     else:
-        logger.info(f"Login failed for email: {user.email}")
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-@app.post("/logout")
-async def logout(user: UserLogin):
-    logger.info(f"Logout for email: {user.email}")
-    return {"message": "Logout successful"}
+        logger.info(f"Login failed for email: {credentials.username}")
+        raise HTTPException(status_code=401, detail="Invalid credentials", headers={"WWW-Authenticate": "Basic"})
 
 @app.post("/location")
-async def receive_location(location: Location):
+async def receive_location(
+    location: Location, 
+    credentials: Annotated[HTTPBasicCredentials, Depends(get_current_username)]
+    ):
     location_data = {'latitude': location.latitude, 'longitude': location.longitude}
     redis_client.rpush('locations', json.dumps(location_data))
     return {"message": "Location received"}
 
 @app.get("/locations")
-async def get_locations():
+async def get_locations(credentials: Annotated[HTTPBasicCredentials, Depends(get_current_username)]):
     locations = [json.loads(loc) for loc in redis_client.lrange('locations', 0, -1)]
     return {"locations": locations}
+
+@app.get("/info",
+        responses={
+                404: {
+                    "description": "Not found",
+                    "content": {
+                        "application/json": {
+                            "example": {"message": "Info file not found"}
+                        }
+                    },
+                },
+            }
+        )
+async def get_info(credentials: Annotated[HTTPBasicCredentials, Depends(security)], 
+                   environment: str = "info-prod.txt"
+                   ):
+    if not isfile("app/" + environment):
+        return JSONResponse(status_code=404, content={"message": "Info file not found"})
+
+    with open("app/" + environment) as f:
+        return f.readlines()
