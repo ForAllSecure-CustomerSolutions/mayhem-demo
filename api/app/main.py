@@ -65,14 +65,22 @@ class Location(BaseModel):
 def get_current_username(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
     logger.info(f"Login attempt for email: {credentials.username}")
     cur = con.cursor()
-    # SQL injection!
-    cur.execute("SELECT * FROM users WHERE email = '%s' and password = '%s'" % (credentials.username, credentials.password))
+    try:
+        # SQL injection!
+        cur.execute("SELECT * FROM users WHERE email = '%s' and password = '%s'" % (credentials.username, credentials.password))
+    except SystemError as sys_err:
+        logger.error(f"SystemError occurred: {sys_err}")
+    except sqlite3.DatabaseError as db_err:
+        logger.error(f"DatabaseError occurred: {db_err}")
+        if isinstance(db_err, sqlite3.OperationalError):
+            raise
+
     if cur.fetchone() is not None:
         logger.info(f"Login successful for email: {credentials.username}")
         return credentials.username
-    else:
-        logger.info(f"Login failed for email: {credentials.username}")
-        raise HTTPException(status_code=401, detail="Invalid credentials", headers={"WWW-Authenticate": "Basic"})
+
+    logger.info(f"Login failed for email: {credentials.username}")
+    raise HTTPException(status_code=401, detail="Invalid credentials", headers={"WWW-Authenticate": "Basic"})
 
 @app.post("/location")
 async def receive_location(
