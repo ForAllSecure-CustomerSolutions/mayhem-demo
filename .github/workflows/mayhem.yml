@@ -122,6 +122,26 @@ jobs:
     - name: Bring down the app
       run: SHA=${{ github.sha }} docker compose down
 
+    # Create environment to run API
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.9
+
+    - name: Generate coverage xml
+      run: |
+        pip install coverage
+        coverage xml --data-file=coverage/.coverage
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        files: coverage.xml
+        flags: Mayhem-for-API
+        fail_ci_if_error: true
+
     - name: Run Dynamic SBOM scan
       run: | 
         #sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace forallsecure-demo
@@ -193,4 +213,4 @@ jobs:
     #     GITHUB_TOKEN: ${{ github.token }}
 
     - name: Pause to let the sync run
-      run: sleep 60
+      run: sleep 15
