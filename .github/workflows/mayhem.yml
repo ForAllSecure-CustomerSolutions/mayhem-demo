@@ -110,7 +110,15 @@ jobs:
     #     api-url: http://localhost:8000
     #     api-spec: http://localhost:8000/openapi.json
     #     sarif-report: api-zap.sarif
-    #     run-args: --ignore-rule auth-bypass --ignore-rule command-injection --ignore-rule internal-server-error --ignore-rule invalid-request-spec --ignore-rule invalid-response-spec --ignore-rule timeout --ignore-rule verb-tampering --ignore-rule nosql-injection
+    #     run-args: |
+    #       --ignore-rule auth-bypass
+    #       --ignore-rule command-injection
+    #       --ignore-rule internal-server-error
+    #       --ignore-rule invalid-request-spec
+    #       --ignore-rule invalid-response-spec
+    #       --ignore-rule timeout
+    #       --ignore-rule verb-tampering
+    #       --ignore-rule nosql-injection
     #     zap-api-scan: true
 
     - name: Start Code analysis
