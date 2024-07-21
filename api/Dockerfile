@@ -8,12 +8,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the app code
 COPY ./app /app/app
+COPY run-it.sh /app
 
 RUN echo "[run]\nrelative_files = True" > .coveragerc
 
-# Set the PYTHONPATH
 ENV PYTHONPATH=/app
 
-CMD ["coverage", "run", "--data-file=/app/coverage/.coverage", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/bin/bash", "./run-it.sh"]
