@@ -97,7 +97,9 @@ jobs:
         api-url: http://localhost:8000
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
-        run-args: --experimental-rules --basic-auth "me@me.com:123456"
+        run-args: |
+                  --experimental-rules 
+                  --basic-auth "me@me.com:123456"
 
     # - name: Start ZAP API analysis
     #   uses: forallsecure/mapi-action@v1
