@@ -3,7 +3,7 @@ services:
     build: ./api
     image: "ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest}"
     volumes:
-      - ./coverage:/coverage
+      - ./coverage:/app/coverage
     ports:
       - "8000:8000"
     depends_on:

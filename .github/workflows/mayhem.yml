@@ -131,7 +131,8 @@ jobs:
     - name: Generate coverage xml
       run: |
         pip install coverage
-        coverage xml --data-file=coverage/.coverage
+        mv coverage/.coverage .coverage
+        coverage xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
