@@ -128,18 +128,12 @@ jobs:
       with:
         python-version: 3.9
 
-    - name: Generate coverage xml
-      run: |
-        pip install coverage
-        mv coverage/.coverage .coverage
-        coverage xml
-
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
-        files: coverage.xml
+        files: coverage/coverage.xml
         flags: Mayhem-for-API
         fail_ci_if_error: true
 
