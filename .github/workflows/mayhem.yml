@@ -91,6 +91,8 @@ jobs:
     - name: Start API analysis
       uses: forallsecure/mapi-action@v1
       continue-on-error: true
+      env:
+        MAPI_BASIC_AUTH: "me@me.com:123456"
       with:
         mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
         target: forallsecure-demo/mayhem-demo/api
@@ -98,8 +100,7 @@ jobs:
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
         run-args: |
-                  --experimental-rules 
-                  --basic-auth "me@me.com:123456"
+                  --experimental-rules
 
     # - name: Start ZAP API analysis
     #   uses: forallsecure/mapi-action@v1
