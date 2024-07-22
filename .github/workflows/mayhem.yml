@@ -101,7 +101,8 @@ jobs:
         sarif-report: api.sarif
         run-args: |
                   --experimental-rules
-                  --ignore-rule internal-server-error
+                  --ignore-rule
+                  internal-server-error
 
     # - name: Start ZAP API analysis
     #   uses: forallsecure/mapi-action@v1
