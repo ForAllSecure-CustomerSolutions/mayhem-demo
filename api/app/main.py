@@ -70,6 +70,8 @@ def get_current_username(credentials: Annotated[HTTPBasicCredentials, Depends(se
         cur.execute("SELECT * FROM users WHERE email = '%s' and password = '%s'" % (credentials.username, credentials.password))
     except SystemError as sys_err:
         logger.error(f"SystemError occurred: {sys_err}")
+    except sqlite3.Warning as db_warn:
+        logger.error(f"sqlite3.Warning occurred: {db_warn}")
     except sqlite3.DatabaseError as db_err:
         logger.error(f"DatabaseError occurred: {db_err}")
         if isinstance(db_err, sqlite3.OperationalError):
