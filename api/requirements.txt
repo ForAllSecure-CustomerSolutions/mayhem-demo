@@ -2,7 +2,7 @@ fastapi==0.111.0
 uvicorn==0.29.0
 pydantic==2.7.1
 pydantic-settings==2.2.1
-redis==5.0.4
+redis==4.5.2
 requests==2.32.2
 python-dotenv==1.0.1
 coverage==7.1.0
