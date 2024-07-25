@@ -151,6 +151,7 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: code.sarif
+        category: Mayhem-for-Code
 
     - name: Bring down the app
       run: SHA=${{ github.sha }} docker compose down
@@ -189,6 +190,7 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: dsbom-api-patched.sarif
+        category: Dynamic-SBOM/api
 
     - name: Dismiss issues that were not observed at runtime
       uses: advanced-security/dismiss-alerts@v1
@@ -204,6 +206,7 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: dsbom-car-patched.sarif
+        category: Dynamic-SBOM/car
 
     - name: Dismiss issues that were not observed at runtime
       uses: advanced-security/dismiss-alerts@v1
