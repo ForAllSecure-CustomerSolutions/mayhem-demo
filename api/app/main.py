@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 import json
 import os
 import sqlite3
@@ -62,6 +62,18 @@ class Location(BaseModel):
     latitude: float
     longitude: float
 
+    @field_validator('latitude')
+    def validate_latitude(cls, value):
+        if value < -90 or value > 90:
+            raise HTTPException(status_code=400, detail='Latitude must be between -90 and 90 degrees')
+        return value
+
+    @field_validator('longitude')
+    def validate_longitude(cls, value):
+        if value < -180 or value > 180:
+            raise HTTPException(status_code=400, detail='Longitude must be between -180 and 180 degrees')
+        return value
+
 def get_current_username(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
     logger.info(f"Login attempt for email: {credentials.username}")
     cur = con.cursor()
@@ -84,12 +96,19 @@ def get_current_username(credentials: Annotated[HTTPBasicCredentials, Depends(se
     logger.info(f"Login failed for email: {credentials.username}")
     raise HTTPException(status_code=401, detail="Invalid credentials", headers={"WWW-Authenticate": "Basic"})
 
-@app.post("/location")
+@app.post("/location", responses={400: {"description": "Invalid location"}})
 async def receive_location(
     location: Location, 
     credentials: Annotated[HTTPBasicCredentials, Depends(get_current_username)]
     ):
     location_data = {'latitude': location.latitude, 'longitude': location.longitude}
+
+    # Unicode 0x0062 is 'b', 0x0075 is 'u', 0x0067 is 'g'
+    # Which is the middle of nowhere in Siberia =)
+    # https://maps.app.goo.gl/XKXSbBMp9kvztrH97
+    if round(location.latitude) == 62 and round(location.longitude) == 75+67:
+        raise HTTPException(status_code=400, detail='Not a valid place to drive a car')
+
     redis_client.rpush('locations', json.dumps(location_data))
     return {"message": "Location received"}
 
@@ -98,18 +117,7 @@ async def get_locations(credentials: Annotated[HTTPBasicCredentials, Depends(get
     locations = [json.loads(loc) for loc in redis_client.lrange('locations', 0, -1)]
     return {"locations": locations}
 
-@app.get("/info",
-        responses={
-                404: {
-                    "description": "Not found",
-                    "content": {
-                        "application/json": {
-                            "example": {"message": "Info file not found"}
-                        }
-                    },
-                },
-            }
-        )
+@app.get("/info", responses={404: {"description": "Not found"}})
 async def get_info(credentials: Annotated[HTTPBasicCredentials, Depends(security)], 
                    environment: str = "info-prod.txt"
                    ):
