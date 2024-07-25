@@ -103,12 +103,6 @@ async def receive_location(
     ):
     location_data = {'latitude': location.latitude, 'longitude': location.longitude}
 
-    # Unicode 0x0062 is 'b', 0x0075 is 'u', 0x0067 is 'g'
-    # Which is the middle of nowhere in Siberia =)
-    # https://maps.app.goo.gl/XKXSbBMp9kvztrH97
-    if round(location.latitude) == 62 and round(location.longitude) == 75+67:
-        raise HTTPException(status_code=400, detail='Not a valid place to drive a car')
-
     redis_client.rpush('locations', json.dumps(location_data))
     return {"message": "Location received"}
 
