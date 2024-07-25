@@ -104,6 +104,11 @@ jobs:
                   --ignore-rule
                   internal-server-error
 
+    - name: Upload SARIF file(s)
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: api.sarif
+
     # - name: Start ZAP API analysis
     #   uses: forallsecure/mapi-action@v1
     #   continue-on-error: true
@@ -132,6 +137,11 @@ jobs:
         args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
         sarif-output: code.sarif
 
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: code.sarif
+
     - name: Bring down the app
       run: SHA=${{ github.sha }} docker compose down
 
@@ -155,48 +165,16 @@ jobs:
 
     - name: Patch docker scout SARIF report for CodeQL
       run : |
-        # jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
-        #     if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
-        #     if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-        #     if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-redis.sarif > dsbom-redis-patched.sarif
-
-        # jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
-        #     if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
-        #     if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-        #     if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif
-        
         jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
             if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
             if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
             if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif
 
-    # Skipping d/t: rejecting SARIF, as there are more related locations per result than allowed (2277 > 1000)
-    # - name: Upload SARIF file(s)
-    #   id: upload-car
-    #   uses: github/codeql-action/upload-sarif@v3
-    #   with:
-    #     sarif_file: dsbom-car-patched.sarif
-
-    - name: Upload SARIF file(s)
+    - name: Upload SARIF file
       id: upload-api
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: dsbom-api-patched.sarif
-
-    # - name: Upload SARIF file(s)
-    #   id: upload-redis
-    #   uses: github/codeql-action/upload-sarif@v3
-    #   with:
-    #     sarif_file: dsbom-redis-patched.sarif
-
-    # - name: Dismiss issues that were not observed at runtime
-    #   uses: advanced-security/dismiss-alerts@v1
-    #   with:
-    #     # specify a 'sarif-id' and 'sarif-file'
-    #     sarif-id: ${{ steps.upload-redis.outputs.sarif-id }}
-    #     sarif-file: dsbom-redis-patched.sarif
-    #   env:
-    #     GITHUB_TOKEN: ${{ github.token }}
 
     - name: Dismiss issues that were not observed at runtime
       uses: advanced-security/dismiss-alerts@v1
@@ -206,13 +184,3 @@ jobs:
         sarif-file: dsbom-api-patched.sarif
       env:
         GITHUB_TOKEN: ${{ github.token }}
-
-    # Skipping d/t: rejecting SARIF, as there are more related locations per result than allowed (2277 > 1000)
-    # - name: Dismiss issues that were not observed at runtime
-    #   uses: advanced-security/dismiss-alerts@v1
-    #   with:
-    #     # specify a 'sarif-id' and 'sarif-file'
-    #     sarif-id: ${{ steps.upload-car.outputs.sarif-id }}
-    #     sarif-file: dsbom-car-patched.sarif
-    #   env:
-    #     GITHUB_TOKEN: ${{ github.token }}
