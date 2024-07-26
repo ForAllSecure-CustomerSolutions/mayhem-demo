@@ -191,18 +191,19 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
 
-    - name: Upload SARIF file
-      id: upload-car
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: dsbom-car-patched.sarif
-        category: Dynamic-SBOM/car
+    # Disabled d/t: rejecting SARIF, as there are more related locations per result than allowed (2277 > 1000)
+    # - name: Upload SARIF file
+    #   id: upload-car
+    #   uses: github/codeql-action/upload-sarif@v3
+    #   with:
+    #     sarif_file: dsbom-car-patched.sarif
+    #     category: Dynamic-SBOM/car
 
-    - name: Dismiss issues that were not observed at runtime
-      uses: advanced-security/dismiss-alerts@v1
-      with:
-        # specify a 'sarif-id' and 'sarif-file'
-        sarif-id: ${{ steps.upload-car.outputs.sarif-id }}
-        sarif-file: dsbom-car-patched.sarif
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+    # - name: Dismiss issues that were not observed at runtime
+    #   uses: advanced-security/dismiss-alerts@v1
+    #   with:
+    #     # specify a 'sarif-id' and 'sarif-file'
+    #     sarif-id: ${{ steps.upload-car.outputs.sarif-id }}
+    #     sarif-file: dsbom-car-patched.sarif
+    #   env:
+    #     GITHUB_TOKEN: ${{ github.token }}
