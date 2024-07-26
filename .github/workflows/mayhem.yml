@@ -136,16 +136,6 @@ jobs:
         owner: platform-demo
         args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
         sarif-output: code.sarif
-        coverage-output: coverage/
-        
-    - name: Upload coverage to Codecov
-      if: always()
-      uses: codecov/codecov-action@v4
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      with:
-        files: coverage/*.lcov
-        flags: Mayhem-for-Code
 
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
