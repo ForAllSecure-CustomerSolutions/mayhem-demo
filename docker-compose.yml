@@ -23,6 +23,7 @@ services:
       - "6379:6379"
 
   on_car:
+    platform: linux/amd64
     build: ./car
     image: "ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest}"
     depends_on:
