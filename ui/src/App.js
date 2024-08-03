@@ -4,26 +4,12 @@ import './styles/App.css';
 import MapView from './components/MapView';
 
 function App() {
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
-  const [pois, setPois] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const fetchPOIs = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`http://localhost:8000/pois?latitude=${latitude}&longitude=${longitude}`);
-      setPois(response.data.pois);
-    } catch (error) {
-      console.error("Error fetching POIs:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleLogin = async () => {
     try {
@@ -42,8 +28,8 @@ function App() {
   };
 
   const handleLogout = async () => {
-    username = "";
-    password = "";
+    setUsername("");
+    setPassword("");
     setIsAuthenticated(false);
   };
 
