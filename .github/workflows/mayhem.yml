@@ -2,14 +2,13 @@ name: Mayhem CI
 
 on:
   push:
-    branches: [ "dbrumley" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "dbrumley" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  WORKSPACE: "demos"
 
 jobs:
 
@@ -26,46 +25,46 @@ jobs:
       with:
         submodules: recursive
 
-#    - name: Login to docker
-#      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+    - name: Login to docker
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-#    - name: Install Docker Scout
-#      run: curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
+    - name: Install Docker Scout
+      run: curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
 
-#    - name: Install mdsbom
-#      run: curl -sSL https://app.mayhem.security/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
+    - name: Install mdsbom
+      run: curl -sSL https://app.mayhem.security/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
 
-#    - name: Update /etc/docker/daemon.json to use mdsbom
-#      run: |
-#        echo '{
-#          "runtimes": {
-    #         "mdsbom": {
-    #           "path": "/usr/bin/mdsbom",
-    #           "runtimeArgs": [
-    #             "runc",
-    #             "--",
-    #             "runc"
-    #           ]
-    #         }
-    #       },
-    #       "default-runtime": "mdsbom"
-    #     }' | sudo tee /etc/docker/daemon.json > /dev/null
+    - name: Update /etc/docker/daemon.json to use mdsbom
+      run: |
+        echo '{
+          "runtimes": {
+            "mdsbom": {
+              "path": "/usr/bin/mdsbom",
+              "runtimeArgs": [
+                "runc",
+                "--",
+                "runc"
+              ]
+            }
+          },
+          "default-runtime": "mdsbom"
+        }' | sudo tee /etc/docker/daemon.json > /dev/null
 
-    # - name: Setup sync
-    #   run: |
-    #     echo '[sync]
-    #     api_token = "${{ secrets.MAYHEM_TOKEN }}"
-    #     upstream_url = "https://app.mayhem.security/"
-    #     workspace = "$WORKSPACE"
-    #     ' | sudo tee -a /etc/mdsbom/config.toml
+    - name: Setup sync
+      run: |
+        echo '[sync]
+        api_token = "${{ secrets.MAYHEM_TOKEN }}"
+        upstream_url = "https://app.mayhem.security/"
+        workspace = "platform-demo"
+        ' | sudo tee -a /etc/mdsbom/config.toml
  
-    # - name: Restart services
-    #   run: |
-    #     sudo systemctl restart docker || sudo journalctl -xeu docker;
-    #     sudo systemctl restart mdsbom || sudo journalctl -xeu mdsbom
+    - name: Restart services
+      run: |
+        sudo systemctl restart docker || sudo journalctl -xeu docker;
+        sudo systemctl restart mdsbom || sudo journalctl -xeu mdsbom
 
-    # - name: MDSBOM login
-    #   run: mdsbom login https://app.mayhem.security ${{ secrets.MAYHEM_TOKEN }}
+    - name: MDSBOM login
+      run: mdsbom login https://app.mayhem.security ${{ secrets.MAYHEM_TOKEN }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -77,41 +76,38 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build the app images
+    - name: Build and push the app images
       run: |
         docker compose pull --ignore-buildable -q
-        docker compose build
+        SHA=${{ github.sha }} docker compose build
+        SHA=${{ github.sha }} docker compose push -q
 
-    - name: Push the app images
-      run: |
-        docker compose push -q
+    - name: Bring up the app
+      run: SHA=${{ github.sha }} docker compose up -d --wait && docker ps
 
-    # - name: Bring up the app
-    #   run: SHA=${{ github.sha }} docker compose up -d --wait && docker ps
+    - name: Wait for the API to be up
+      run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
 
-    # - name: Wait for the API to be up
-    #   run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
+    - name: Start API analysis
+      uses: forallsecure/mapi-action@v1
+      continue-on-error: true
+      env:
+        MAPI_BASIC_AUTH: "me@me.com:123456"
+      with:
+        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+        target: platform-demo/mayhem-demo/api
+        api-url: http://localhost:8000
+        api-spec: http://localhost:8000/openapi.json
+        sarif-report: api.sarif
+        run-args: |
+                  --experimental-rules
+                  --ignore-rule
+                  internal-server-error
 
-    # - name: Start API analysis
-    #   uses: forallsecure/mapi-action@v1
-    #   continue-on-error: true
-    #   env:
-    #     MAPI_BASIC_AUTH: "me@me.com:123456"
-    #   with:
-    #     mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-    #     target: "$WORKSPACE/mayhem-demo/api"
-    #     api-url: http://localhost:8000
-    #     api-spec: http://localhost:8000/openapi.json
-    #     sarif-report: api.sarif
-    #     run-args: |
-    #               --experimental-rules
-    #               --ignore-rule
-    #               internal-server-error
-
-    # - name: Upload SARIF file
-    #   uses: github/codeql-action/upload-sarif@v3
-    #   with:
-    #     sarif_file: api.sarif
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: api.sarif
 
     # - name: Start ZAP API analysis
     #   uses: forallsecure/mapi-action@v1
@@ -133,67 +129,67 @@ jobs:
     #       --ignore-rule nosql-injection
     #     zap-api-scan: true
 
-    # - name: Start Code analysis
-    #   uses: forallsecure/mcode-action@v1
-    #   with:
-    #     mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-    #     owner: $WORKSPACE 
-    #     args: -f car/Mayhemfile --project "$WORKSPACE/mayhem-demo/car" --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
-    #     sarif-output: code.sarif
+    - name: Start Code analysis
+      uses: forallsecure/mcode-action@v1
+      with:
+        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+        owner: platform-demo
+        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
+        sarif-output: code.sarif
 
-    # - name: Upload SARIF file
-    #   uses: github/codeql-action/upload-sarif@v3
-    #   with:
-    #     sarif_file: code.sarif
-    #     category: Mayhem-for-Code
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: code.sarif
+        category: Mayhem-for-Code
 
-    # - name: Bring down the app
-    #   run: SHA=${{ github.sha }} docker compose down
+    - name: Bring down the app
+      run: SHA=${{ github.sha }} docker compose down
 
-    # - name: Pause to let mdsbom sync run
-    #   run: sleep 15 && mdsbom query --workspace platform-demo containers -a
+    - name: Pause to let mdsbom sync run
+      run: sleep 15 && mdsbom query --workspace platform-demo containers -a
 
-    # - name: Upload coverage to Codecov
-    #   uses: codecov/codecov-action@v4
-    #   env:
-    #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    #   with:
-    #     files: coverage/coverage.xml
-    #     flags: Mayhem-for-API
-    #     fail_ci_if_error: true
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        files: coverage/coverage.xml
+        flags: Mayhem-for-API
+        fail_ci_if_error: true
 
-    # - name: Run Dynamic SBOM scan
-    #   run: | 
-    #     sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace platform-demo
-    #     sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace platform-demo
+    - name: Run Dynamic SBOM scan
+      run: | 
+        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace platform-demo
+        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace platform-demo
 
-    # - name: Patch docker scout SARIF report for CodeQL
-    #   run : |
-    #     jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
-    #         if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
-    #         if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-    #         if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif
+    - name: Patch docker scout SARIF report for CodeQL
+      run : |
+        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+            if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
+            if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
+            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif
 
-    #     jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
-    #         if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
-    #         if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-    #         if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif
+        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+            if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
+            if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
+            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif
 
-    # - name: Upload SARIF file
-    #   id: upload-api
-    #   uses: github/codeql-action/upload-sarif@v3
-    #   with:
-    #     sarif_file: dsbom-api-patched.sarif
-    #     category: Dynamic-SBOM/api
+    - name: Upload SARIF file
+      id: upload-api
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: dsbom-api-patched.sarif
+        category: Dynamic-SBOM/api
 
-    # - name: Dismiss issues that were not observed at runtime
-    #   uses: advanced-security/dismiss-alerts@v1
-    #   with:
-    #     # specify a 'sarif-id' and 'sarif-file'
-    #     sarif-id: ${{ steps.upload-api.outputs.sarif-id }}
-    #     sarif-file: dsbom-api-patched.sarif
-    #   env:
-    #     GITHUB_TOKEN: ${{ github.token }}
+    - name: Dismiss issues that were not observed at runtime
+      uses: advanced-security/dismiss-alerts@v1
+      with:
+        # specify a 'sarif-id' and 'sarif-file'
+        sarif-id: ${{ steps.upload-api.outputs.sarif-id }}
+        sarif-file: dsbom-api-patched.sarif
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
 
     # Disabled d/t: rejecting SARIF, as there are more related locations per result than allowed (2277 > 1000)
     # - name: Upload SARIF file
