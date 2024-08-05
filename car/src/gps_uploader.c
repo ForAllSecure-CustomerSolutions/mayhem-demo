@@ -131,11 +131,15 @@ int main(int argc, char* argv[])
 
   GPS_FILE_PATH = argv[1];
 
-  if ((fd = open(GPS_FILE_PATH, O_RDONLY)) == -1)
+  if ((fd = open(GPS_FILE_PATH, O_RDONLY)) == -1) {
+    printf("Couldn't open %s. Check your file path.\n", GPS_FILE_PATH);
     exit(-1);
+  }
 
-  if ((in_bytes = read(fd, line, sizeof(line) - 1)) == -1)
+  if ((in_bytes = read(fd, line, sizeof(line) - 1)) == -1) {
+    printf(stderr, "Couldn't read any bytes. Check your file.\n");
     exit(-1);
+  }
 
   line[in_bytes] = 0;
   parse_lat_lon(line, &lat, &lon);
