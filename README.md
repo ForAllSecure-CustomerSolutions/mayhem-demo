@@ -51,6 +51,7 @@ run:
 docker compose up --build
 ```
 
+
 Then navigate to [http://localhost:3000](http://localhost:3000). In more detail: 
 
   - **UI**: [http://localhost:3000](http://localhost:3000). The default username and password is
@@ -62,6 +63,10 @@ Then navigate to [http://localhost:3000](http://localhost:3000). In more detail:
 
 **Note** You can add the --watch flag to sync any changes from the UI or API
 files to the running docker container. 
+
+
+**Note 2:** If you've previously run this, please run `docker compose down -v` to
+remove any stale volumes. 
 
 ## Getting started with Mayhem
 
@@ -165,6 +170,11 @@ both `mapi` and `zap`. Try it out with:
 docker run -it -e MAPI_TOKEN <token> forallsecure/mapi:latest run --url 'https://demo-api.mayhem4api.forallsecure.com/api/v3/'  mayhem-demo/api 60  'https://demo-api.mayhem4api.forallsecure.com/api/v3/openapi.json'   --interactive --zap
 ```
 
+**Note:**  Make sure you run `docker compose down -v` to remove any old volumes from previous
+runs. `mapi` will create new locations each time you run it in redis, and can
+quickly create really long responses. 
+
+
 ### Step 4b: Run Mayhem Dynamic SBOM to identify results on the attack surface
 
 Mayhem Dynamic SBOM works by taking in a docker SBOM/SCA report, and outputting
@@ -233,7 +243,7 @@ containers [here](https://github.com/orgs/ForAllSecure-CustomerSolutions/package
     docker push <docker id>/mayhem-demo/car:latest
     ```
    
-  2. Start analysis with `mayhem run mayhem-demo/car --image ghcr.io/forallsecure-customersolutions/mayhem-demo/car:678172d20c4182e18c2b303f3b1d7b4292b05965 --duration 1800`
+  2. Start analysis with `mayhem run mayhem-demo/car --image ghcr.io/forallsecure-customersolutions/mayhem-demo/car:latest --duration 1800`
 
 And that’s it! You should be able to see results for Mayhem for Code in your project!
 

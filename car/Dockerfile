@@ -1,17 +1,21 @@
-FROM gcc:latest
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential curl netcat-traditional libc6-dbg
+FROM debian:stable-slim
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential libc6-dbg curl netcat-traditional
 
 # Copy in source code
 WORKDIR /app
+COPY Makefile Makefile
 COPY src src
 
-# TEST vs PROD builds
-RUN gcc -o gps_uploader -g -fsanitize=undefined -fno-sanitize-recover src/gps_uploader.c
+# Binary build
+RUN make
+#RUN gcc -o gps_uploader -g -fsanitize=undefined -fno-sanitize-recover src/gps_uploader.c
+#RUN gcc -o gps_uploader_gcov -g -fprofile-arcs -ftest-coverage src/gps_uploader.c
 
 # Some demo example GPS data
-COPY testsuite /testsuite
-COPY gps_data.txt /testsuite/gps_data.txt
+COPY testsuite testsuite
+COPY gps_data.txt gps_data.txt
 
-ENV AFL_INST_LIBS=0
+# REMOVEME
+COPY crashers crashers
 
-CMD ["/app/src/wait-for-it.sh", "api", "--", "/app/gps_uploader", "/testsuite/gps_data.txt", "http://api:8000/location"]
+CMD ["/app/src/wait-for-it.sh", "api", "--", "make",  "upload"]

@@ -1,0 +1,21 @@
+// .devcontainer/devcontainer.json
+{
+  "name": "C Development Container",
+  "context": "../car",
+  "dockerFile": "../car/Dockerfile",
+  "workspaceFolder": "/app",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-vscode.cpptools", // C++ Extension
+    "ms-vscode.cmake-tools", // CMake Extension
+    "ryanluker.vscode-coverage-gutters" // Coverage Gutters Extension
+  ],
+  "forwardPorts": [],
+  "postCreateCommand": "",
+  "remoteUser": "root",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached"
+  ]
+}
