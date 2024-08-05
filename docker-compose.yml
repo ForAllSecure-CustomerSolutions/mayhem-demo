@@ -1,9 +1,7 @@
 services:
   api:
     build: ./api
-    image: "ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest}"
-    volumes:
-      - ./coverage:/app/coverage
+    image: "ghcr.io/dbrumley/mayhem-demo/api:${SHA:-latest}"
     ports:
       - "8000:8000"
     depends_on:
@@ -11,7 +9,7 @@ services:
 
   ui:
     build: ./ui
-    image: "ghcr.io/forallsecure-customersolutions/mayhem-demo/ui:${SHA:-latest}"
+    image: "ghcr.io/dbrumley/mayhem-demo/ui:${SHA:-latest}"
     ports:
       - "3000:3000"
     depends_on:
@@ -22,9 +20,9 @@ services:
     ports:
       - "6379:6379"
 
-  on_car:
+  car:
     platform: linux/amd64
     build: ./car
-    image: "ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest}"
+    image: "ghcr.io/dbrumley/mayhem-demo/car:${SHA:-latest}"
     depends_on:
       - api

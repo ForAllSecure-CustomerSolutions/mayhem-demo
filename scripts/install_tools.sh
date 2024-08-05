@@ -12,6 +12,15 @@ is_docker_installed() {
     fi
 }
 
+install_docker_scout() {
+    echo "Installing docker scout"
+    # Install scout
+    mkdir -p $HOME/.docker/scout
+    curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
+    echo "Docker scout is now installed"
+}
+
+
 # Function to install Docker
 # see https://docs.docker.com/engine/install/debian/
 install_docker() {
@@ -45,10 +54,6 @@ install_docker() {
         containerd.io docker-buildx-plugin \
         docker-compose-plugin
 
-    # Install scout
-    mkdir -p $HOME/.docker/scout
-    curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
-
     sudo usermod -aG docker $USER
     echo "Docker and Docker Scout for Linux has been installed successfully."
 }
@@ -78,7 +83,7 @@ install_mayhem() {
   curl -fsSL ${MAYHEM_URL}/cli/mdsbom/linux/latest/mdsbom.deb -o mdsbom.deb && \
      sudo dpkg -i ./mdsbom.deb && sudo apt-get install -f
 
-  rm mdsbom.deb mayhem-install.sh
+  rm mdsbom.deb mayhem-install.sh ./mapi
   echo "Mayhem installed"
 }
 
@@ -90,6 +95,13 @@ else
     install_docker
 fi
 
+if [ -d $HOME/.docker/scout ]; then
+    echo "Docker scout already installed"
+else
+    install_docker_scout
+fi
+
+echo "Installing Mayhem"
 install_mayhem
 
 echo "To finish installation, you must run:"

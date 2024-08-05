@@ -16,6 +16,6 @@
   "postCreateCommand": "",
   "remoteUser": "root",
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached"
   ]
 }
