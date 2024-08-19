@@ -20,8 +20,7 @@ on:
     secrets:
       mayhem-token:
         description: 'Mayhem Token'
-        required: true
-        default: "${{ secrets.MAYHEM_TOKEN }}"
+        required: false
 
 
 env:
@@ -34,6 +33,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Set Mayhem token
+      run: if [ -z "${{ secrets.mayhem-token }}" ]; then echo "{{ secrets.MAYHEM_TOKEN }}" >>${GITHUB_ENV}; fi
+
     - name: lowercase github.repository
       run: echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     
@@ -112,7 +114,7 @@ jobs:
         MAPI_BASIC_AUTH: "me@me.com:123456"
       with:
         mayhem-token: "${{ secrets.mayhem-token }}"
-        target: "${{ inputs.workspace }}"/mayhem-demo/api
+        target: ${{ inputs.workspace }}/mayhem-demo/api
         api-url: http://localhost:8000
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
