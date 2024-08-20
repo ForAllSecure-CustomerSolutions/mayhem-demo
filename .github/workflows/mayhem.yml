@@ -34,7 +34,14 @@ jobs:
 
     steps:
     - name: Set Mayhem token
-      run: if [ -z "${{ secrets.mayhem-token }}" ]; then echo "{{ secrets.MAYHEM_TOKEN }}" >>${GITHUB_ENV}; fi
+      run: |
+        if [ -z "${{ secrets.mayhem-token }}" ]; then
+          echo "::add-mask::${{ secrets.MAYHEM_TOKEN }}"
+          echo "MAYHEM_TOKEN=${{ secrets.MAYHEM_TOKEN }}" >> $GITHUB_ENV
+        else
+          echo "::add-mask::${{ secrets.mayhem-token }}"
+          echo "MAYHEM_TOKEN=${{ secrets.mayhem-token }}" >> $GITHUB_ENV
+        fi
 
     - name: lowercase github.repository
       run: echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
