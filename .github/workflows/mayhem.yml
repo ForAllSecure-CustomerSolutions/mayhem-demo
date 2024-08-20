@@ -5,6 +5,18 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      mayhem_url:
+        description: 'Mayhem URL'
+        required: true
+        default: 'https://app.mayhem.security'
+        type: string
+      workspace:
+        description: 'Mayhem Workspace'
+        required: true
+        default: 'platform-demo'
+        type: string
   workflow_call:
     inputs:
       mayhem_url:
@@ -21,7 +33,6 @@ on:
       mayhem-token:
         description: 'Mayhem Token'
         required: false
-
 
 env:
   REGISTRY: ghcr.io
