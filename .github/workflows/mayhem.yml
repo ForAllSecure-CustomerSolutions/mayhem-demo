@@ -5,18 +5,6 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:
-    inputs:
-      mayhem_url:
-        description: 'Mayhem URL'
-        required: true
-        default: 'https://app.mayhem.security'
-        type: string
-      workspace:
-        description: 'Mayhem Workspace'
-        required: true
-        default: 'platform-demo'
-        type: string
   workflow_call:
     inputs:
       mayhem_url:
@@ -54,6 +42,11 @@ jobs:
           echo "MAYHEM_TOKEN=${{ secrets.mayhem-token }}" >> $GITHUB_ENV
         fi
 
+    - name: Set default inputs if not provided
+      run: |
+        echo "MAYHEM_URL=${{ inputs.mayhem_url || 'https://app.mayhem.security' }}" >> $GITHUB_ENV
+        echo "WORKSPACE=${{ inputs.workspace || 'platform-demo' }}" >> $GITHUB_ENV
+
     - name: lowercase github.repository
       run: echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     
@@ -69,7 +62,7 @@ jobs:
       run: curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
 
     - name: Install mdsbom
-      run: curl -sSL "${{ inputs.mayhem_url }}"/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
+      run: curl -sSL $MAYHEM_URL/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
 
     - name: Update /etc/docker/daemon.json to use mdsbom
       run: |
@@ -90,9 +83,9 @@ jobs:
     - name: Setup sync
       run: |
         echo '[sync]
-        api_token = "${{ secrets.mayhem-token }}"
-        upstream_url = "${{ inputs.mayhem_url }}"
-        workspace = "${{ inputs.workspace }}"
+        api_token = $MAYHEM_TOKEN
+        upstream_url = $MAYHEM_URL
+        workspace = $WORKSPACE
         ' | sudo tee -a /etc/mdsbom/config.toml
  
     - name: Restart services
@@ -101,7 +94,7 @@ jobs:
         sudo systemctl restart mdsbom || sudo journalctl -xeu mdsbom
 
     - name: MDSBOM login
-      run: mdsbom login "${{ inputs.mayhem_url }}" ${{ secrets.mayhem-token }}
+      run: mdsbom login $MAYHEM_URL $MAYHEM_TOKEN
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -131,8 +124,8 @@ jobs:
       env:
         MAPI_BASIC_AUTH: "me@me.com:123456"
       with:
-        mayhem-token: "${{ secrets.mayhem-token }}"
-        target: ${{ inputs.workspace }}/mayhem-demo/api
+        mayhem-token: $MAYHEM_TOKEN
+        target: $WORKSPACE/mayhem-demo/api
         api-url: http://localhost:8000
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
@@ -150,8 +143,8 @@ jobs:
     #   uses: forallsecure/mapi-action@v1
     #   continue-on-error: true
     #   with:
-    #     mayhem-token: "${{ secrets.mayhem-token }}"
-    #     target: "${{ inputs.workspace }}"/mayhem-demo/api-zap
+    #     mayhem-token: $MAYHEM_TOKEN
+    #     target: $WORKSPACE/mayhem-demo/api-zap
     #     api-url: http://localhost:8000
     #     api-spec: http://localhost:8000/openapi.json
     #     sarif-report: api-zap.sarif
@@ -169,8 +162,8 @@ jobs:
     - name: Start Code analysis
       uses: forallsecure/mcode-action@v1
       with:
-        mayhem-token: "${{ secrets.mayhem-token }}"
-        owner: "${{ inputs.workspace }}"
+        mayhem-token: $MAYHEM_TOKEN
+        owner: $WORKSPACE
         args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
         sarif-output: code.sarif
 
@@ -184,7 +177,7 @@ jobs:
       run: SHA=${{ github.sha }} docker compose down
 
     - name: Pause to let mdsbom sync run
-      run: sleep 15 && mdsbom query --workspace "${{ inputs.workspace }}" containers -a
+      run: sleep 15 && mdsbom query --workspace $WORKSPACE containers -a
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -197,8 +190,8 @@ jobs:
 
     - name: Run Dynamic SBOM scan
       run: | 
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace "${{ inputs.workspace }}"
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace "${{ inputs.workspace }}"
+        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace $WORKSPACE
+        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace $WORKSPACE
 
     - name: Patch docker scout SARIF report for CodeQL
       run : |
