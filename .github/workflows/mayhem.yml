@@ -168,11 +168,28 @@ jobs:
         sudo mkdir -p /usr/local/bin/ &&
         sudo install mayhem /usr/local/bin/mayhem &&
         rm -f mayhem
+        rm -rf /home/runner/.config/mayhem/
         mayhem login $MAYHEM_URL $MAYHEM_TOKEN
 
     - name: Start Code analysis
       run: |
-        mayhem --verbosity info run . --project forallsecure-customersolutions/mayhem-demo --owner $WORKSPACE -f car/Mayhemfile --image ghcr.io/forallsecure-customersolutions/mayhem-demo/car:f0390fa7c417bc26017eaf8cd2097c73415b28c1 --duration 60 --sarif code.sarif
+        run=$(mayhem --verbosity info run . --project forallsecure-customersolutions/mayhem-demo --owner $WORKSPACE -f car/Mayhemfile --image ghcr.io/forallsecure-customersolutions/mayhem-demo/car:f0390fa7c417bc26017eaf8cd2097c73415b28c1 --duration 60)
+        echo "runId=$run" >> $GITHUB_OUTPUT
+
+        runName="$(echo $run | awk -F / '{ print $(NF-1) }')"
+
+        if ! mayhem --verbosity info wait $run --owner $WORKSPACE --sarif code.sarif/$runName.sarif; then
+          exit 3;
+        fi
+    
+        status=$(mayhem --verbosity info show --owner $WORKSPACE --format json $run | jq '.[0].status')
+
+        if [[ $status == *"stopped"* || $status == *"failed"* ]]; then
+          exit 2;
+        fi
+
+        target=$(echo $run | sed 's:/[^/]*$::')
+        run_number=$(echo $run | sed 's:.*/::')
 
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
