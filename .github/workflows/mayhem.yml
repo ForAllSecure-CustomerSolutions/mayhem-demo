@@ -168,7 +168,7 @@ jobs:
         sudo mkdir -p /usr/local/bin/ &&
         sudo install mayhem /usr/local/bin/mayhem &&
         rm -f mayhem
-        rm -rf /home/runner/.config/mayhem/
+        rm -rf /home/runner/.config/mayhem
         mayhem login $MAYHEM_URL $MAYHEM_TOKEN
 
     - name: Start Code analysis
