@@ -118,23 +118,22 @@ jobs:
     - name: Wait for the API to be up
       run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
 
-    - name: Log into mapi manually
-      run: |
-        curl -Lo mapi $MAYHEM_URL/cli/mapi/linux-musl/latest/mapi $1 $2 &&
-        chmod +x mapi &&
-        sudo mkdir -p /usr/local/bin/ &&
-        sudo install mapi /usr/local/bin/mapi &&
-        rm -f mapi
-        rm -rf ~/.config/mayhem
-        SKIP_MAPI_AUTO_UPDATE=1 mapi --mayhem-url $MAYHEM_URL login $MAYHEM_TOKEN
-
-
     - name: Start API analysis
+      uses: forallsecure/mapi-action@v1
       continue-on-error: true
-      run: |
-        export SKIP_MAPI_AUTO_UPDATE=1 
-        export MAPI_BASIC_AUTH="me@me.com:123456"
-        mapi run $WORKSPACE/mayhem-demo/api auto http://localhost:8000/openapi.json --url http://localhost:8000 --sarif api.sarif --experimental-rules --ignore-rule internal-server-error
+      env:
+        MAPI_BASIC_AUTH: "me@me.com:123456"
+      with:
+        mayhem-url: ${{ env.MAYHEM_URL }}
+        mayhem-token: ${{ env.MAYHEM_TOKEN }}
+        target: ${{ env.WORKSPACE }}/mayhem-demo/api
+        api-url: http://localhost:8000
+        api-spec: http://localhost:8000/openapi.json
+        sarif-report: api.sarif
+        run-args: |
+                  --experimental-rules
+                  --ignore-rule
+                  internal-server-error
 
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
@@ -161,35 +160,14 @@ jobs:
     #       --ignore-rule nosql-injection
     #     zap-api-scan: true
 
-    - name: Log into mayhem manually
-      run: |
-        curl --fail -Lo mayhem https://app.mayhem.security/cli/Linux/mayhem $1 $2 &&
-        chmod +x mayhem &&
-        sudo mkdir -p /usr/local/bin/ &&
-        sudo install mayhem /usr/local/bin/mayhem &&
-        rm -f mayhem
-        rm -rf /home/runner/.config/mayhem
-        mayhem login $MAYHEM_URL $MAYHEM_TOKEN
-
     - name: Start Code analysis
-      run: |
-        run=$(mayhem --verbosity info run . --project forallsecure-customersolutions/mayhem-demo --owner $WORKSPACE -f car/Mayhemfile --image ghcr.io/forallsecure-customersolutions/mayhem-demo/car:f0390fa7c417bc26017eaf8cd2097c73415b28c1 --duration 60)
-        echo "runId=$run" >> $GITHUB_OUTPUT
-
-        runName="$(echo $run | awk -F / '{ print $(NF-1) }')"
-
-        if ! mayhem --verbosity info wait $run --owner $WORKSPACE --sarif code.sarif/$runName.sarif; then
-          exit 3;
-        fi
-    
-        status=$(mayhem --verbosity info show --owner $WORKSPACE --format json $run | jq '.[0].status')
-
-        if [[ $status == *"stopped"* || $status == *"failed"* ]]; then
-          exit 2;
-        fi
-
-        target=$(echo $run | sed 's:/[^/]*$::')
-        run_number=$(echo $run | sed 's:.*/::')
+      uses: forallsecure/mcode-action@v1
+      with:
+        mayhem-url: ${{ env.MAYHEM_URL }}
+        mayhem-token: ${{ env.MAYHEM_TOKEN }}
+        owner: ${{ env.WORKSPACE }}
+        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
+        sarif-output: code.sarif
 
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
