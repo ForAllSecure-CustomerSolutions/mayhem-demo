@@ -125,7 +125,8 @@ jobs:
         sudo mkdir -p /usr/local/bin/ &&
         sudo install mapi /usr/local/bin/mapi &&
         rm -f mapi
-        mapi --mayhem-url $MAYHEM_URL login $MAYHEM_TOKEN
+        rm -rf ~/.config/mayhem
+        SKIP_MAPI_AUTO_UPDATE=1 mapi --mayhem-url $MAYHEM_URL login $MAYHEM_TOKEN
 
 
     - name: Start API analysis
