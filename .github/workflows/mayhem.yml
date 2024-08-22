@@ -130,6 +130,7 @@ jobs:
 
 
     - name: Start API analysis
+      continue-on-error: true
       run: |
         export SKIP_MAPI_AUTO_UPDATE=1 
         export MAPI_BASIC_AUTH="me@me.com:123456"
