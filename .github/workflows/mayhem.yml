@@ -79,8 +79,15 @@ jobs:
     - name: Build and push the app images
       run: |
         docker compose pull --ignore-buildable -q
+        
+        # Push with commit sha
         SHA=${{ github.sha }} docker compose build
         SHA=${{ github.sha }} docker compose push -q
+        
+        # Push with latest
+        docker compose build
+        docker compose push -q
+
 
     - name: Bring up the app
       run: SHA=${{ github.sha }} docker compose up -d --wait && docker ps
