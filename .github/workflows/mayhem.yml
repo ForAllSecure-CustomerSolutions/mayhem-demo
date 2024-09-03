@@ -83,9 +83,9 @@ jobs:
     - name: Setup sync
       run: |
         echo "[sync]
-        api_token = \"$MAYHEM_TOKEN\"
-        upstream_url = \"$MAYHEM_URL\"
-        workspace = \"$WORKSPACE\"
+        api_token = \"${{ env.MAYHEM_TOKEN }}\"
+        upstream_url = \"${{ env.MAYHEM_URL }}\"
+        workspace = \"${{ env.WORKSPACE }}\"
         " | sudo tee -a /etc/mdsbom/config.toml
  
     - name: Restart services
@@ -94,7 +94,7 @@ jobs:
         sudo systemctl restart mdsbom || sudo journalctl -xeu mdsbom
 
     - name: MDSBOM login
-      run: mdsbom login $MAYHEM_URL $MAYHEM_TOKEN
+      run: mdsbom login ${{ env.MAYHEM_URL }} ${{ env.MAYHEM_TOKEN }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -186,7 +186,7 @@ jobs:
       run: SHA=${{ github.sha }} docker compose down
 
     - name: Pause to let mdsbom sync run
-      run: sleep 15 && mdsbom query --workspace $WORKSPACE containers -a
+      run: sleep 15 && mdsbom query --workspace ${{ env.WORKSPACE }} containers -a
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -199,8 +199,8 @@ jobs:
 
     - name: Run Dynamic SBOM scan
       run: | 
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace $WORKSPACE
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace $WORKSPACE
+        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace ${{ env.WORKSPACE }}
+        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace ${{ env.WORKSPACE }}
 
     - name: Patch docker scout SARIF report for CodeQL
       run : |
