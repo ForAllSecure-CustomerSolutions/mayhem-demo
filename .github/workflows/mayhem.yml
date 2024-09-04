@@ -141,7 +141,7 @@ jobs:
       with:
         mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
         owner: platform-demo
-        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
+        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --duration 600
         sarif-output: code.sarif
         coverage-output: car-coverage
 
