@@ -148,9 +148,11 @@ jobs:
     - name: Add car prefix to SARIF
       shell: bash
       run: |
-        jq ".runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= \"car/\" + ." code-sarif/car.sarif > code-sarif/car2.sarif
-        jq ".runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= sub(\"/rc/\"; \"/src/\")" code-sarif/car2.sarif > code-sarif/car3.sarif
-        mv -f code-sarif/car3.sarif code-sarif/car.sarif
+        jq '.runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= "car/" + . 
+          | .runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= sub("app/"; "") 
+          | .runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= sub("/rc/"; "/src/")' \
+          code-sarif/car.sarif > code-sarif/car2.sarif
+        mv -f code-sarif/car2.sarif code-sarif/car.sarif
 
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
