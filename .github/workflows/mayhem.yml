@@ -145,11 +145,18 @@ jobs:
         sarif-output: code.sarif
         coverage-output: car-coverage
 
+    - name: Relativize SARIF
+      shell: bash
+      run: |
+        jq ".runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= sub(\"${GITHUB_WORKSPACE}/\"; \"car/\")" code.sarif > code2.sarif
+        mv -f code2.sarif code.sarif
+
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: code.sarif
         category: Mayhem-for-Code
+        checkout_path: ${{ github.workspace }}/car
 
     - name: Upload coverage to Codecov
       if: always()
