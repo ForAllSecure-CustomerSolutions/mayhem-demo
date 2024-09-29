@@ -1,0 +1,79 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - tag
+  - push
+
+variables:
+  DOCKER_DRIVER: overlay2
+  GIT_SUBMODULE_STRATEGY: recursive
+  GITLAB_REGISTRY_API_IMAGE: $CI_REGISTRY_IMAGE/api
+  GITLAB_REGISTRY_UI_IMAGE: $CI_REGISTRY_IMAGE/ui
+  GITLAB_REGISTRY_CAR_IMAGE: $CI_REGISTRY_IMAGE/car
+  SHA: $CI_COMMIT_SHA
+
+before_script:
+  # Log in to GitLab Container Registry
+  - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+
+build_api:
+  stage: build
+  script:
+    - docker-compose build api
+
+build_ui:
+  stage: build
+  script:
+    - docker-compose build ui
+
+build_car:
+  stage: build
+  script:
+    - docker-compose build car
+
+tag_api:
+  stage: tag
+  script:
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest} $GITLAB_REGISTRY_API_IMAGE:$SHA
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest} $GITLAB_REGISTRY_API_IMAGE:latest
+
+tag_ui:
+  stage: tag
+  script:
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/ui:${SHA:-latest} $GITLAB_REGISTRY_UI_IMAGE:$SHA
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/ui:${SHA:-latest} $GITLAB_REGISTRY_UI_IMAGE:latest
+
+tag_car:
+  stage: tag
+  script:
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest} $GITLAB_REGISTRY_CAR_IMAGE:$SHA
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest} $GITLAB_REGISTRY_CAR_IMAGE:latest
+
+push_api:
+  stage: push
+  script:
+    - docker push $GITLAB_REGISTRY_API_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_API_IMAGE:latest
+  dependencies:
+    - tag_api
+
+push_ui:
+  stage: push
+  script:
+    - docker push $GITLAB_REGISTRY_UI_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_UI_IMAGE:latest
+  dependencies:
+    - tag_ui
+
+push_car:
+  stage: push
+  script:
+    - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
+  dependencies:
+    - tag_car
+
