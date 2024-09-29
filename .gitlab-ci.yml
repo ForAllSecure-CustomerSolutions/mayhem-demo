@@ -47,3 +47,25 @@ build_car:
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
 
+container_scanning:
+  variables:
+    DOCKER_IMAGE: $GITLAB_REGISTRY_CAR_IMAGE:latest
+    DOCKERFILE_PATH: "car/Dockerfile"
+    GIT_STRATEGY: "fetch"
+
+
+container_scanning_image2:
+  extends: container_scanning
+  variables:
+    DOCKER_IMAGE: $GITLAB_REGISTRY_UI_IMAGE:latest
+    DOCKERFILE_PATH: "alpine/Dockerfile"
+    DOCKER_USER: ""
+    DOCKER_PASSWORD: ""
+
+container_scanning_image3:
+  extends: container_scanning
+  variables:
+    DOCKER_IMAGE: $GITLAB_REGISTRY_API_IMAGE:latest
+    DOCKERFILE_PATH: "alpine/Dockerfile"
+    DOCKER_USER: ""
+    DOCKER_PASSWORD: ""
