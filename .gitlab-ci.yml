@@ -27,6 +27,8 @@ build_api:
     - echo "Tagging as $GITLAB_REGISTRY_API_IMAGE tag"
     - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest} $GITLAB_REGISTRY_API_IMAGE:$SHA
     - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest} $GITLAB_REGISTRY_API_IMAGE:latest
+    - docker push $GITLAB_REGISTRY_API_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_API_IMAGE:latest
 
 build_ui:
   stage: build
@@ -34,6 +36,8 @@ build_ui:
     - docker-compose build ui  # Ensure the image is built
     - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/ui:${SHA:-latest} $GITLAB_REGISTRY_UI_IMAGE:$SHA
     - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/ui:${SHA:-latest} $GITLAB_REGISTRY_UI_IMAGE:latest
+    - docker push $GITLAB_REGISTRY_UI_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_UI_IMAGE:latest
 
 build_car:
   stage: build
@@ -41,6 +45,8 @@ build_car:
     - docker-compose build car  # Ensure the image is built
     - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest} $GITLAB_REGISTRY_CAR_IMAGE:$SHA
     - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest} $GITLAB_REGISTRY_CAR_IMAGE:latest
+    - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
 
 push_api:
   stage: push
