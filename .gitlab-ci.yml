@@ -24,6 +24,7 @@ build_api:
   stage: build
   script:
     - docker-compose build api  # Ensure the image is built
+    - echo "Tagging as $GITLAB_REGISTRY_API_IMAGE tag"
     - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest} $GITLAB_REGISTRY_API_IMAGE:$SHA
     - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest} $GITLAB_REGISTRY_API_IMAGE:latest
 
