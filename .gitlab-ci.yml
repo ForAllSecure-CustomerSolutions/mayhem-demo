@@ -48,27 +48,7 @@ build_car:
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
 
-push_api:
-  stage: push
-  script:
-    - docker push $GITLAB_REGISTRY_API_IMAGE:$SHA
-    - docker push $GITLAB_REGISTRY_API_IMAGE:latest
-  dependencies:
-    - build_api
 
-push_ui:
-  stage: push
-  script:
-    - docker push $GITLAB_REGISTRY_UI_IMAGE:$SHA
-    - docker push $GITLAB_REGISTRY_UI_IMAGE:latest
-  dependencies:
-    - build_ui
-
-push_car:
-  stage: push
-  script:
-    - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
-    - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
-  dependencies:
-    - build_car
+include:
+- template: Jobs/Container-Scanning.gitlab-ci.yml
 
