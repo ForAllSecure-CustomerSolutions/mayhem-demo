@@ -26,5 +26,6 @@ services:
     platform: linux/amd64
     build: ./car
     image: "ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest}"
+    command: "/app/src/wait-for-it.sh api -- make upload"
     depends_on:
       - api
