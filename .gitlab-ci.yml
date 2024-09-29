@@ -47,6 +47,11 @@ build_car:
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
 
+
+include:
+  - template: Container-Scanning.gitlab-ci.yml
+
+
 container_scanning:
   variables:
     DOCKER_IMAGE: $GITLAB_REGISTRY_CAR_IMAGE:latest
