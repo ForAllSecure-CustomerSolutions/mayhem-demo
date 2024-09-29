@@ -16,8 +16,7 @@ variables:
   GITLAB_REGISTRY_CAR_IMAGE: $CI_REGISTRY_IMAGE/car
   SHA: $CI_COMMIT_SHA
 
-before_script:
-  # Log in to GitLab Container Registry
+before_script: # Log in to GitLab Container Registry
   - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
 
 build_api:
@@ -50,5 +49,4 @@ build_car:
 
 
 include:
-- template: Jobs/Container-Scanning.gitlab-ci.yml
-
+    - template: Jobs/Container-Scanning.gitlab-ci.yml
