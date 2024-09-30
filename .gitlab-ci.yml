@@ -53,6 +53,8 @@ build_car:
 
 
 container_scanning:
+  inherit:
+    default: false
   variables:
     CS_IMAGE: $GITLAB_REGISTRY_API_IMAGE:latest
 
