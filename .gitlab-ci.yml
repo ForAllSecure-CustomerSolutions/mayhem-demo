@@ -1,3 +1,6 @@
+include:
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+
 image: docker:latest
 
 services:
@@ -49,13 +52,8 @@ build_car:
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
 
 
-include:
-  - template: Jobs/Container-Scanning.gitlab-ci.yml
-
 container_scanning:
   variables:
-    DOCKER_IMAGE: $GITLAB_REGISTRY_API_IMAGE:latest
-    DOCKERFILE_PATH: "api/Dockerfile"
-    GIT_STRATEGY: "fetch"
+    CS_IMAGE: $GITLAB_REGISTRY_API_IMAGE:latest
 
 
