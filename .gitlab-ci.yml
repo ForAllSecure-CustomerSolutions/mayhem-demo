@@ -49,3 +49,7 @@ build_car:
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
 
+
+include:
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+
