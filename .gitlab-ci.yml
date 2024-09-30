@@ -49,7 +49,7 @@ build_car:
 
 
 include:
-  - template: Container-Scanning.gitlab-ci.yml
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
 
 
 container_scanning:
