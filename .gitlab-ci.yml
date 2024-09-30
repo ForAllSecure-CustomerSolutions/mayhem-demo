@@ -14,6 +14,7 @@ variables:
   GITLAB_REGISTRY_API_IMAGE: $CI_REGISTRY_IMAGE/api
   GITLAB_REGISTRY_UI_IMAGE: $CI_REGISTRY_IMAGE/ui
   GITLAB_REGISTRY_CAR_IMAGE: $CI_REGISTRY_IMAGE/car
+  DOCKER_IMAGE: $GITLAB_REGISTRY_API_IMAGE:latest
   SHA: $CI_COMMIT_SHA
 
 before_script: # Log in to GitLab Container Registry
@@ -47,30 +48,3 @@ build_car:
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
     - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
 
-
-include:
-  - template: Jobs/Container-Scanning.gitlab-ci.yml
-
-
-container_scanning:
-  variables:
-    DOCKER_IMAGE: $GITLAB_REGISTRY_CAR_IMAGE:latest
-    DOCKERFILE_PATH: "car/Dockerfile"
-    GIT_STRATEGY: "fetch"
-
-
-container_scanning_image2:
-  extends: container_scanning
-  variables:
-    DOCKER_IMAGE: $GITLAB_REGISTRY_UI_IMAGE:latest
-    DOCKERFILE_PATH: "alpine/Dockerfile"
-    DOCKER_USER: ""
-    DOCKER_PASSWORD: ""
-
-container_scanning_image3:
-  extends: container_scanning
-  variables:
-    DOCKER_IMAGE: $GITLAB_REGISTRY_API_IMAGE:latest
-    DOCKERFILE_PATH: "alpine/Dockerfile"
-    DOCKER_USER: ""
-    DOCKER_PASSWORD: ""
