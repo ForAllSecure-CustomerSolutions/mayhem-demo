@@ -94,8 +94,8 @@ int parse_lat_lon(char* line, int* latitude, int* longitude) {
   lat = atoi(fields[2]);
   lon = atoi(fields[4]);
 
-  if (fields[3][0] == 'S') lat = -lat;
-  if (fields[5][0] == 'W') lon = -lon;
+  if (fields[3][0] == 'S') lat = -lat; // Integer overflow when lat = INT_MIN
+  if (fields[5][0] == 'W') lon = -lon; // Integer overflow when lon = INT_MIN
 
 
   *latitude = lat;
