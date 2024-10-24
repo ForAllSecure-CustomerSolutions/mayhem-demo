@@ -66,10 +66,7 @@ build_and_login() {
 run_mapi() {
   window=0
   tmux rename-window -t $SESSION:$window "api"
-  tmux send-keys -t $SESSION:$window "docker compose up --build" C-m
-
-  tmux split-window -v
-
+  tmux send-keys -t $SESSION:$window "docker compose up --build -d" C-m
   tmux send-keys -t $SESSION:$window "# Make sure you wait for everything to come up" C-m # Wait for everything to come up
   tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}mayhem-demo/api 1m http://localhost:8000/openapi.json --url http://localhost:8000 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules" 
 }
@@ -92,9 +89,6 @@ run_code() {
  
   # Download a completed run with a crasher. 
   tmux send-keys -t $SESSION:$window "mayhem download -o ./results ${WORKSPACE}/mayhem-demo/car-done" C-m
-
-  # Place lcov file where VSCode plugin coverage-gutters (https://github.com/ryanluker/vscode-coverage-gutters/) can find it.
-  tmux send-keys -t $SESSION:$window "cp ./results/line_coverage.lcov lcov.info" C-m
 
   # Set up running the crasher. 
   tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/fa7f316850f9243a65be2e2bc1940e316be0748231204a3f4238dccf731911f9"

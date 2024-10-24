@@ -2,6 +2,7 @@ project: demos/mayhem-demo
 target: car
 advanced_triage: true
 image: dbrumley/car
+duration: 900
 tasks:
   - name: exploitability_factors
   - name: regression_testing

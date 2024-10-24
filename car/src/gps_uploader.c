@@ -94,8 +94,8 @@ int parse_lat_lon(char* line, int* latitude, int* longitude) {
   lat = atoi(fields[2]);
   lon = atoi(fields[4]);
 
-  if (fields[3][0] == 'S') lat = -lat;
-  if (fields[5][0] == 'W') lon = -lon;
+  if (fields[3][0] == 'S') lat = -lat; // Integer overflow when lat = INT_MIN
+  if (fields[5][0] == 'W') lon = -lon; // Integer overflow when lon = INT_MIN
 
 
   *latitude = lat;
@@ -137,16 +137,13 @@ int main(int argc, char* argv[])
   }
 
   if ((in_bytes = read(fd, line, sizeof(line) - 1)) == -1) {
-    printf(stderr, "Couldn't read any bytes. Check your file.\n");
+    fprintf(stderr, "Couldn't read any bytes. Check your file.\n");
     exit(-1);
   }
 
   line[in_bytes] = 0;
   parse_lat_lon(line, &lat, &lon);
   vulnerable_c(0, line, lat, lon);
-
-  latitude = (double)lat / 1000000;
-  longitude = (double)lon / 1000000;
 
   if (argc == 3) {
     upload_position(argv[2], (double)lat / (double)1000000, (double)lon / (double)1000000);

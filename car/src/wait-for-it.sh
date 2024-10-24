@@ -5,7 +5,7 @@ host="$1"
 shift
 cmd="$@"
 
-max_attempts=5
+max_attempts=15
 attempt_num=1
 
 until nc -z "$host" 8000; do

@@ -120,7 +120,7 @@ jobs:
 
 
     - name: Bring up the app
-      run: SHA=${{ github.sha }} docker compose up -d --wait && docker ps
+      run: SHA=${{ github.sha }} docker compose up -d --wait && sleep 1 && docker ps
 
     - name: Wait for the API to be up
       run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
@@ -173,14 +173,35 @@ jobs:
         mayhem-url: ${{ env.MAYHEM_URL }}
         mayhem-token: ${{ env.MAYHEM_TOKEN }}
         owner: ${{ env.WORKSPACE }}
-        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }}
+        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --duration 600
         sarif-output: code.sarif
+        coverage-output: car-coverage/
+
+    - name: Add car prefix to SARIF
+      shell: bash
+      run: |
+        jq '.runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= "car/" + . 
+          | .runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= sub("app/"; "") 
+          | .runs[0].results[].locations[].physicalLocation.artifactLocation.uri |= sub("/rc/"; "/src/")' \
+          code-sarif/car.sarif > code-sarif/car2.sarif
+        mv -f code-sarif/car2.sarif code-sarif/car.sarif
 
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: code.sarif
+        sarif_file: code-sarif/
         category: Mayhem-for-Code
+        checkout_path: ${{ github.workspace }}/car
+
+    - name: Upload coverage to Codecov
+      if: always()
+      uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        files: car-coverage/*
+        flags: Mayhem-for-Code
+        name: mayhem
 
     - name: Bring down the app
       run: SHA=${{ github.sha }} docker compose down
