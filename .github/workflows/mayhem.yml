@@ -5,7 +5,22 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      mayhem_url:
+        description: 'Mayhem URL'
+        required: true
+        default: 'https://app.mayhem.security'
+        type: string
+      workspace:
+        description: 'Mayhem Workspace'
+        required: true
+        default: 'platform-demo'
+        type: string
+    secrets:
+      mayhem-token:
+        description: 'Mayhem Token'
+        required: false
 
 env:
   REGISTRY: ghcr.io
@@ -17,6 +32,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Set Mayhem token
+      run: |
+        if [ -z "${{ secrets.mayhem-token }}" ]; then
+          echo "::add-mask::${{ secrets.MAYHEM_TOKEN }}"
+          echo "MAYHEM_TOKEN=${{ secrets.MAYHEM_TOKEN }}" >> $GITHUB_ENV
+        else
+          echo "::add-mask::${{ secrets.mayhem-token }}"
+          echo "MAYHEM_TOKEN=${{ secrets.mayhem-token }}" >> $GITHUB_ENV
+        fi
+
+    - name: Set default inputs if not provided
+      run: |
+        echo "MAYHEM_URL=${{ inputs.mayhem_url || 'https://app.mayhem.security' }}" >> $GITHUB_ENV
+        echo "WORKSPACE=${{ inputs.workspace || 'platform-demo' }}" >> $GITHUB_ENV
+
     - name: lowercase github.repository
       run: echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     
@@ -32,7 +62,7 @@ jobs:
       run: curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
 
     - name: Install mdsbom
-      run: curl -sSL https://app.mayhem.security/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
+      run: curl -sSL $MAYHEM_URL/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
 
     - name: Update /etc/docker/daemon.json to use mdsbom
       run: |
@@ -52,11 +82,11 @@ jobs:
 
     - name: Setup sync
       run: |
-        echo '[sync]
-        api_token = "${{ secrets.MAYHEM_TOKEN }}"
-        upstream_url = "https://app.mayhem.security/"
-        workspace = "platform-demo"
-        ' | sudo tee -a /etc/mdsbom/config.toml
+        echo "[sync]
+        api_token = \"${{ env.MAYHEM_TOKEN }}\"
+        upstream_url = \"${{ env.MAYHEM_URL }}\"
+        workspace = \"${{ env.WORKSPACE }}\"
+        " | sudo tee -a /etc/mdsbom/config.toml
  
     - name: Restart services
       run: |
@@ -64,7 +94,7 @@ jobs:
         sudo systemctl restart mdsbom || sudo journalctl -xeu mdsbom
 
     - name: MDSBOM login
-      run: mdsbom login https://app.mayhem.security ${{ secrets.MAYHEM_TOKEN }}
+      run: mdsbom login ${{ env.MAYHEM_URL }} ${{ env.MAYHEM_TOKEN }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -101,8 +131,9 @@ jobs:
       env:
         MAPI_BASIC_AUTH: "me@me.com:123456"
       with:
-        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        target: platform-demo/mayhem-demo/api
+        mayhem-url: ${{ env.MAYHEM_URL }}
+        mayhem-token: ${{ env.MAYHEM_TOKEN }}
+        target: ${{ env.WORKSPACE }}/mayhem-demo/api
         api-url: http://localhost:8000
         api-spec: http://localhost:8000/openapi.json
         sarif-report: api.sarif
@@ -120,8 +151,8 @@ jobs:
     #   uses: forallsecure/mapi-action@v1
     #   continue-on-error: true
     #   with:
-    #     mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-    #     target: platform-demo/mayhem-demo/api-zap
+    #     mayhem-token: $MAYHEM_TOKEN
+    #     target: $WORKSPACE/mayhem-demo/api-zap
     #     api-url: http://localhost:8000
     #     api-spec: http://localhost:8000/openapi.json
     #     sarif-report: api-zap.sarif
@@ -139,8 +170,9 @@ jobs:
     - name: Start Code analysis
       uses: forallsecure/mcode-action@v1
       with:
-        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        owner: platform-demo
+        mayhem-url: ${{ env.MAYHEM_URL }}
+        mayhem-token: ${{ env.MAYHEM_TOKEN }}
+        owner: ${{ env.WORKSPACE }}
         args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --duration 600
         sarif-output: code-sarif/
         coverage-output: car-coverage/
@@ -175,12 +207,12 @@ jobs:
       run: SHA=${{ github.sha }} docker compose down
 
     - name: Pause to let mdsbom sync run
-      run: sleep 15 && mdsbom query --workspace platform-demo containers -a
+      run: sleep 15 && mdsbom query --workspace ${{ env.WORKSPACE }} containers -a
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
       with:
         files: coverage/coverage.xml
         flags: Mayhem-for-API
@@ -188,8 +220,8 @@ jobs:
 
     - name: Run Dynamic SBOM scan
       run: | 
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace platform-demo
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace platform-demo
+        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace ${{ env.WORKSPACE }}
+        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace ${{ env.WORKSPACE }}
 
     - name: Patch docker scout SARIF report for CodeQL
       run : |
@@ -217,7 +249,7 @@ jobs:
         sarif-id: ${{ steps.upload-api.outputs.sarif-id }}
         sarif-file: dsbom-api-patched.sarif
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: "${{ github.token }}"
 
     # Disabled d/t: rejecting SARIF, as there are more related locations per result than allowed (2277 > 1000)
     # - name: Upload SARIF file
@@ -234,4 +266,4 @@ jobs:
     #     sarif-id: ${{ steps.upload-car.outputs.sarif-id }}
     #     sarif-file: dsbom-car-patched.sarif
     #   env:
-    #     GITHUB_TOKEN: ${{ github.token }}
+    #     GITHUB_TOKEN: "${{ github.token }}"
