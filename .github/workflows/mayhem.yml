@@ -174,7 +174,7 @@ jobs:
         mayhem-token: ${{ env.MAYHEM_TOKEN }}
         owner: ${{ env.WORKSPACE }}
         args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --duration 600
-        sarif-output: code.sarif
+        sarif-output: code-sarif/
         coverage-output: car-coverage/
 
     - name: Add car prefix to SARIF
