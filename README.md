@@ -89,14 +89,14 @@ Now that you have an account, you can start using Mayhem in your local environme
   * Use the token to log in with your token with `mayhem login https://app.
     mayhem.security <your API token>`
 
-  * Mayhem Dynamic SBOM currently has a separate CLI install, and currently
+  <!-- * Mayhem Dynamic SBOM currently has a separate CLI install, and currently
     only supports Linux. Install by following
-    [https://app.mayhem.security/docs/dynamic-sbom/installation/](https://app.mayhem.security/docs/dynamic-sbom/installation/).
+    [https://app.mayhem.security/docs/dynamic-sbom/installation/](https://app.mayhem.security/docs/dynamic-sbom/installation/). -->
 
-At the end of this, you will have three CLIs:
+At the end of this, you will have two CLIs:
   1. `mayhem`, which runs Mayhem for Code analysis
   2. `mapi`, which runs Mayhem for API analysis
-  3. `mdsbom`, which runs Mayhem Dynamic SBOM analysis
+  <!-- 3. `mdsbom`, which runs Mayhem Dynamic SBOM analysis -->
 
 Note: All CLIs share authentication information, so you need only log in with
 one CLI.
@@ -118,10 +118,11 @@ report.
   1. Make sure you have the code running with `docker compose up --build` and
      that you can reach the API on [http://localhost:8000](http://localhost:8000). 
 
-  2. Run `mapi run mayhem-demo/api 1m http://localhost:8000/openapi.json --url
-     http://localhost:8000 --html mapi.html --interactive --basic-auth
-     "me@me.com:123456" --experimental-rules --ignore-rule
-     internal-server-error`
+  2. Run mapi:
+  
+```
+mapi run mayhem-demo/api 1m http://localhost:8000/openapi.json --url http://localhost:8000 --html mapi.html --interactive --basic-auth "me@me.com:123456" --experimental-rules --ignore-rule internal-server-error
+```
 
   3. That’s it! You can exit when done.
 
@@ -190,13 +191,21 @@ tool that outputs a CycloneDX or SPDX file.
   * You have installed
     [docker](https://docs.docker.com/engine/install/ubuntu/), are logged into
     docker (`docker login`) and have [docker
-    scout](https://docs.docker.com/scout/install/) installed. 
-  * You have `mdsbom` installed and you are logged into Mayhem. 
+    scout](https://docs.docker.com/scout/install/) installed. (You may also need to set $DOCKER_USERNAME and $DOCKER_PASSWORD)
 
 
 **Steps:**
 
-  1. Run `mdsbom scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif`
+  0. Login
+
+  ```
+  docker run -it --rm --name mdsbom --privileged artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest mdsbom login $MAYHEM_URL $MAYHEM_TOKEN
+Login successful, please refer to the documentation to configure sync of local container data to the server
+  ```
+
+  1. Run MDSBOM
+
+
 
   2. That’s it! View the results on the Mayhem UI.
 
