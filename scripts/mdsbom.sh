@@ -1,7 +1,6 @@
 #!/bin/ash
 
-docker login
-dockerd &
+mdsbom login $MAYHEM_URL $MAYHEM_TOKEN
 docker run ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest &
 PID=$!
 sleep 5

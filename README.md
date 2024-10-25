@@ -168,7 +168,7 @@ also integrated ZAP support just in case, and even have a docker container with
 both `mapi` and `zap`. Try it out with:
 
 ```
-docker run -it -e MAPI_TOKEN <token> forallsecure/mapi:latest run --url 'https://demo-api.mayhem4api.forallsecure.com/api/v3/'  mayhem-demo/api 60  'https://demo-api.mayhem4api.forallsecure.com/api/v3/openapi.json'   --interactive --zap
+docker run -it -e MAPI_TOKEN <token> forallsecure/mapi:latest run --url 'https://demo-api.mayhem4api.forallsecure.com/api/v3/' mayhem-demo/api 60 'https://demo-api.mayhem4api.forallsecure.com/api/v3/openapi.json' --interactive --zap
 ```
 
 **Note:**  Make sure you run `docker compose down -v` to remove any old volumes from previous
@@ -192,26 +192,51 @@ tool that outputs a CycloneDX or SPDX file.
     [docker](https://docs.docker.com/engine/install/ubuntu/), are logged into
     docker (`docker login`) and have [docker
     scout](https://docs.docker.com/scout/install/) installed. (You may also need to set $DOCKER_USERNAME and $DOCKER_PASSWORD)
+  * You have MDSBOM sync configured under `/etc/mdsbom/config.toml` (see 
+    [here](https://docs.mayhem.security/dynamic-sbom/guides/deployment/#configuring-sync) for more details)
 
 
 **Steps:**
 
-  0. Login
-
+  1. Start MDSBOM container
   ```
-  docker run -it --rm --name mdsbom --privileged artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest mdsbom login $MAYHEM_URL $MAYHEM_TOKEN
-Login successful, please refer to the documentation to configure sync of local container data to the server
+  docker run \
+          -e DOCKER_USERNAME \
+          -e DOCKER_PASSWORD \
+          -e MAYHEM_URL \
+          -e MAYHEM_TOKEN \
+          -v /etc/mdsbom/config.toml:/etc/mdsbom/config.toml \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v $(pwd):/workspace \
+          -it \
+          --rm \
+          --name mdsbom \
+          --privileged \
+          artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest ash
   ```
 
-  1. Run MDSBOM
+  2. Log into MDSBOM
+  ```
+  mdsbom login $MAYHEM_URL $MAYHEM_TOKEN
+  ```
 
+  3. Run target container
+  ```
+  docker run ghcr.io/forsallsecure-customersolutions/mayhem-demo/api:latest
+  ```
 
+  4. Stop the container with Ctrl-C
 
-  2. That’s it! View the results on the Mayhem UI.
+  5. Run MDSBOM
+  ```
+  mdsbom run scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
+  ```    
+
+  6. That’s it! View the results on the Mayhem UI.
 
 **Details:**
 
-The command line about did several things all at once:
+The final command line did several things all at once:
 1. Built an SBOM and SCA report from `docker scout`
 2. Identified the attack surface in the `api` image. 
 3. Reduced the SCA findings to only those items on the attack surface. In our
@@ -226,13 +251,30 @@ In more detail, the arguments:
     and more generally any source using a standardized format. 
 
   * `ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest` is path to
-    the docker image (`docker compose build` will default to this name).
+    the docker image.
 
   * ``--sca-report-out dsbom-api.sarif` says to output a SARIF format as file
     `dsbom-api.sarif`.  
 
 Tip: You can use `--workspace <name>` to specify a different workspace to
 upload results. 
+
+Tip: All of these commands are in a script under `scripts/mdsbom.sh`. You can run it all at once with 
+```
+docker run \
+        -e DOCKER_USERNAME \
+        -e DOCKER_PASSWORD \
+        -e MAYHEM_URL \
+        -e MAYHEM_TOKEN \
+        -v /etc/mdsbom/config.toml:/etc/mdsbom/config.toml \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v $(pwd):/workspace \
+        -it \
+        --rm \
+        --name mdsbom \
+        --privileged \
+        artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest /workspace/scripts/mdsbom.sh
+```
 
 
 ### Step 4C: Run Mayhem for Code to find code vulnerabilities
