@@ -2,6 +2,8 @@ project: demos/mayhem-demo
 target: car
 advanced_triage: true
 image: dbrumley/car
+# Blank out testsuite so each run doesn't use regression testing
+testsuite: 
 duration: 900
 tasks:
   - name: exploitability_factors
