@@ -259,23 +259,7 @@ In more detail, the arguments:
 Tip: You can use `--workspace <name>` to specify a different workspace to
 upload results. 
 
-Tip: All of these commands are in a script under `scripts/mdsbom.sh`. You can run it all at once with 
-```
-docker run \
-        -e DOCKER_USERNAME \
-        -e DOCKER_PASSWORD \
-        -e MAYHEM_URL \
-        -e MAYHEM_TOKEN \
-        -v /etc/mdsbom/config.toml:/etc/mdsbom/config.toml \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -v $(pwd):/workspace \
-        -it \
-        --rm \
-        --name mdsbom \
-        --privileged \
-        artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest /workspace/scripts/mdsbom.sh
-```
-
+Tip: All of these commands are in a script under `scripts/mdsbom.sh`. You can run it all at once with `scripts/mdsbom-dind.sh`
 
 ### Step 4C: Run Mayhem for Code to find code vulnerabilities
 
