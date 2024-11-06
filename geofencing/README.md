@@ -1,6 +1,6 @@
 # Windows Geofencing Demo with Mayhem
 
-This project demonstrates how to fuzz a C++ application that processes GPS points and checks if a car is within a defined boundary. Using Mayhem, we can identify exploitable vulnerabilities, such as buffer overflows, in the code by running a fuzzing session.
+This example demonstrates how to fuzz a C++ application that processes GPS points and checks if a car is within a defined boundary. Using Mayhem, we can identify exploitable vulnerabilities, such as buffer overflows, in the code by performing a Mayhem run.
 
 ## Prerequisites
 
