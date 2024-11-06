@@ -10,7 +10,9 @@ To run this demo, you'll need:
 2. **Mayhem CLI**: Install the Mayhem CLI from https://app.mayhem.security/-/installation.
 3. **Mayhem Authentication**: Authenticate with your Mayhem account using the following command:
 
+```
    mayhem login https://app.mayhem.security/ <your-authentication-token>
+```
 
 ## Project Setup
 
@@ -22,12 +24,16 @@ To run this demo, you'll need:
 1. **Build the Solution**:
    Use MSBuild to compile the `geofencing.sln` solution file. This generates an executable file for testing.
 
+```
    msbuild geofencing.sln
+```
 
 2. **Package the Executable for Mayhem**:
    Package the built executable to prepare it for the fuzzing session with Mayhem.
 
+```
    mayhem package .\x64\Debug\geofencing.exe -o package
+```
 
 3. **Copy Test Suite Files**:
    If your project includes any input test files, copy them to the `testsuite` folder within the package directory:
@@ -37,7 +43,9 @@ To run this demo, you'll need:
 4. **Run the Fuzzing Session with Mayhem**:
    Start the fuzzing session by running Mayhem with the packaged executable.
 
+```
    mayhem run package --owner <workspace> --project geofencing --target geofencing
+```
 
    - `--owner`: Specifies your Mayhem workspace name.
    - `--project`: Names the project for organizational purposes in Mayhem.
@@ -57,10 +65,12 @@ The `geofencing.cpp` file contains the following key components:
 
 Run the executable with a file containing GPS points and a car identifier, formatted as follows:
 
+```
 40.748817 -73.985428
 40.748941 -73.987152
 40.747409 -73.987128
 40.747331 -73.985407
 123ABC456
+```
 
 The file should contain exactly 5 lines: 4 for the boundary points and 1 for the car identifier.
