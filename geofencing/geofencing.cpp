@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -77,11 +78,8 @@ void logGPSPoints(const std::vector<GPSPoint>& points, const std::string& carIde
         logString += ss.str();
     }
 
-    size_t lengthToCopy = std::min(logString.length(), sizeof(logBuffer) - 1);
-    for (size_t i = 0; i < lengthToCopy; i++) {
-        logBuffer[i] = logString[i];
-    }
-    logBuffer[lengthToCopy] = '\0';
+    // Intentionally unsafe copy without length checking
+    strcpy(logBuffer, logString.c_str());  // Potentially dangerous
 
     std::cout << "Logging GPS Points: \n" << logBuffer << std::endl;
 }
