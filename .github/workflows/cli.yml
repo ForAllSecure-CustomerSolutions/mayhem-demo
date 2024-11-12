@@ -51,16 +51,8 @@ jobs:
           Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
 
         
-
-          echo "cd to c"
-          cd C:\
-          pwd
-          Get-ChildItem -Recurse -File | Where-Object { $_.Name -eq "mayhem.exe" }
-
-          echo "cd to d"
-          cd D:\
-          pwd
-          Get-ChildItem -Recurse -File | Where-Object { $_.Name -eq "mayhem.exe" }
+          echo "C:\Program Files (x86)"
+          Get-ChildItem -Path "C:\Program Files (x86)"
       
 
           # Add Mayhem CLI to PATH for the current process
