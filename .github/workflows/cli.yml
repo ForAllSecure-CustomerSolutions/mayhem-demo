@@ -50,15 +50,12 @@ jobs:
           Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
           Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
 
-          
-          echo "Get-ChildItem"
-          Get-ChildItem
+        
 
-          echo "Get-ChildItem -Path D:\"
-          Get-ChildItem -Path D:\
-
-          echo "Get-ChildItem -Path C:\"
-          Get-ChildItem -Path C:\
+          echo "Get-ChildItem -Path C:\Program Files (x86)"
+          echo "cd to c"
+          cd C:\
+          Get-ChildItem -Recurse -File | Where-Object { $_.Name -eq "mayhem.exe" }
 
       
 
