@@ -4,16 +4,17 @@
 #include <sstream>
 #include <vector>
 #include <cmath>
-#include <cstring>  
-#include <iomanip>  
-#include <utility>  // For std::pair
+#include <cstring> 
+#include <iomanip> 
+#include <utility> 
 
+// Structure to represent a GPS coordinate with latitude and longitude
 struct GPSPoint {
     double latitude;
     double longitude;
 };
 
-// Function to check if a point is inside a quadrilateral
+// Determine if a given GPS point is inside a polygon (quadrilateral).
 bool isPointInPolygon(const std::vector<GPSPoint>& polygon, const GPSPoint& point) {
     int numVertices = static_cast<int>(polygon.size());
     bool inside = false;
@@ -23,14 +24,16 @@ bool isPointInPolygon(const std::vector<GPSPoint>& polygon, const GPSPoint& poin
             (point.latitude < (polygon[j].latitude - polygon[i].latitude) *
                 (point.longitude - polygon[i].longitude) /
                 (polygon[j].longitude - polygon[i].longitude) + polygon[i].latitude)) {
-            inside = !inside;
+            inside = !inside; 
         }
     }
 
     return inside;
 }
 
-// Function to read GPS points and car identifier from a file
+// Read GPS points and a car identifier from a file
+// - The file is expected to contain 5 lines: 4 for boundary points and 1 for car location.
+// - The car identifier is assumed to be a non-numeric string at the end.
 std::pair<std::vector<GPSPoint>, std::string> readGPSPointsFromFile(const std::string& filename) {
     std::vector<GPSPoint> points;
     std::ifstream file(filename);
@@ -45,22 +48,22 @@ std::pair<std::vector<GPSPoint>, std::string> readGPSPointsFromFile(const std::s
         GPSPoint point;
         std::stringstream ss(line);
 
-        // Check if the line is the car identifier
         if (!(ss >> point.latitude >> point.longitude)) {
-            // If it fails to read lat/lon, assume it's the car identifier
             file.close();
-            return { points, line };
+            return { points, line }; 
         }
 
-        points.push_back(point);
+        points.push_back(point); 
     }
 
     file.close();
-    return { points, "" }; // Default return with an empty identifier if missing
+    return { points, "" }; 
 }
 
+// Log GPS points to the console with a car identifier.
+// This function contains a **deliberate buffer overflow vulnerability** for demonstration purposes.
 void logGPSPoints(const std::vector<GPSPoint>& points, const std::string& carIdentifier) {
-    char logBuffer[200];
+    char logBuffer[200]; // Fixed-size buffer (200 bytes)
     std::string logString;
 
     for (int i = 0; i < static_cast<int>(points.size()); i++) {
@@ -69,21 +72,23 @@ void logGPSPoints(const std::vector<GPSPoint>& points, const std::string& carIde
             << "Lat: " << points[i].latitude
             << ", Lon: " << points[i].longitude;
 
-        // Add car identifier only for the last point, representing the car location
         if (i == points.size() - 1) {
             ss << "\nCar ID: " << carIdentifier;
         }
         ss << "\n";
 
-        logString += ss.str();
+        logString += ss.str(); 
     }
 
-    // Intentionally unsafe copy without length checking
-    strcpy(logBuffer, logString.c_str());  // Potentially dangerous
+    // Copies the log string into a fixed-size buffer without checking its length.
+    // If logString is longer than 200 characters, it will cause a buffer overflow.
+    strcpy(logBuffer, logString.c_str()); // Potential vulnerability
 
     std::cout << "Logging GPS Points: \n" << logBuffer << std::endl;
 }
 
+// Processes input files, reads GPS points, logs data, 
+// and checks if the car is within the boundary.
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <gps_points_file>" << std::endl;
@@ -105,20 +110,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // First 4 points are the boundary (quadrilateral)
     std::vector<GPSPoint> boundaryPoints(gpsPoints.begin(), gpsPoints.begin() + 4);
 
-    // Last point is the car's location
     GPSPoint carLocation = gpsPoints[4];
 
-    // Log the GPS points with car identifier
     logGPSPoints(gpsPoints, carIdentifier);
 
-    // Check if the car is inside the boundary
     if (isPointInPolygon(boundaryPoints, carLocation)) {
         std::cout << "The car is inside the boundary!" << std::endl;
-    }
-    else {
+    } else {
         std::cout << "The car is NOT inside the boundary!" << std::endl;
     }
 

@@ -20,4 +20,4 @@ cp testsuite/* package/testsuite
 # --owner specifies the user or organization that owns the project in Mayhem.
 # --project identifies this particular fuzzing project by name.
 # --target is a label associated with this binary, used to track the specific target being fuzzed.
-mayhem run package --owner forallsecure-demo --project geofencing --target geofencing
+mayhem run package --owner platform-demo --project mayhem-demo --target cli

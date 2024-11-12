@@ -270,6 +270,33 @@ your own apps. Here are some great starting points to bookmark:
     [https://github.com/orgs/mayhemheroes/repositories](https://github.com/orgs/mayhemheroes/repositories)
 
 
+### Step 4D: Windows Geofencing Demo with Mayhem
+
+This section demonstrates how to test a Windows C++ geofencing application that processes GPS data points to determine if a car is within a predefined boundary. By leveraging Mayhem, this demo can uncover exploitable vulnerabilities.
+
+#### Prerequisites
+
+Before proceeding, ensure you have completed the **Mayhem CLI setup and authentication** as outlined in [Step 2](#step-2-install-the-mayhem-cli).
+
+Additionally, you'll need:
+
+1. **Visual Studio 2022**: Install with the C++ development workload.
+
+#### Running the Geofencing Demo
+
+The geofencing demo can be set up, packaged, and executed using the PowerShell script located at [run_mcode.ps1](./cli/run_mcode.ps1). This script serves as a detailed example of the entire process. To run the demo, follow these instructions:
+
+1. **Open Developer PowerShell for Visual Studio 2022**  
+   Launch the Developer PowerShell for Visual Studio to ensure all necessary environment variables are set.
+
+2. **Run the Example Script**  
+   Execute the provided [run_mcode.ps1](./cli/run_mcode.ps1) script to build, package, and perform the Mayhem run
+
+#### Usage Example for Geofencing Application
+
+The geofencing binary expects an input file containing GPS coordinates followed by a car identifier. See [coordinates.txt](./cli/testsuite/coordinates.txt) file for more details.
+
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE.txt](./LICENSE.txt) file for details.
