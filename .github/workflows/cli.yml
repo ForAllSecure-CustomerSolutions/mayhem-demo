@@ -26,77 +26,46 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-
   build:
-
     runs-on: windows-latest
 
     steps:
-    - name: Set Mayhem token
-      run: |
-        if [ -z "${{ secrets.mayhem-token }}" ]; then
-          echo "::add-mask::${{ secrets.MAYHEM_TOKEN }}"
-          echo "MAYHEM_TOKEN=${{ secrets.MAYHEM_TOKEN }}" >> $GITHUB_ENV
-        else
-          echo "::add-mask::${{ secrets.mayhem-token }}"
-          echo "MAYHEM_TOKEN=${{ secrets.mayhem-token }}" >> $GITHUB_ENV
-        fi
-
-    - name: Set default inputs if not provided
-      run: |
-        echo "MAYHEM_URL=${{ inputs.mayhem_url || 'https://app.mayhem.security' }}" >> $GITHUB_ENV
-        echo "WORKSPACE=${{ inputs.workspace || 'platform-demo' }}" >> $GITHUB_ENV
-
-    - name: lowercase github.repository
-      run: echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
-    
-    # checkout repository
-    - uses: actions/checkout@v3
+    # Step 1: Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
       with:
         submodules: recursive
 
-    - name: Login to docker
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-
-    - name: Setup sync
+    # Step 2: Set Mayhem token using PowerShell syntax
+    - name: Set Mayhem token
+      shell: pwsh
       run: |
-        echo "[sync]
-        api_token = \"${{ env.MAYHEM_TOKEN }}\"
-        upstream_url = \"${{ env.MAYHEM_URL }}\"
-        workspace = \"${{ env.WORKSPACE }}\"
-        " | sudo tee -a /etc/mdsbom/config.toml
- 
-    - name: Restart services
+        if ($env:mayhem_token -ne "") {
+          Write-Host "::add-mask::$env:mayhem_token"
+          echo "MAYHEM_TOKEN=$env:mayhem_token" >> $env:GITHUB_ENV
+        } elseif ($env:MAYHEM_TOKEN -ne "") {
+          Write-Host "::add-mask::$env:MAYHEM_TOKEN"
+          echo "MAYHEM_TOKEN=$env:MAYHEM_TOKEN" >> $env:GITHUB_ENV
+        }
+
+    # Step 3: Set default inputs if not provided
+    - name: Set default inputs if not provided
+      shell: pwsh
       run: |
-        sudo systemctl restart docker || sudo journalctl -xeu docker;
+        echo "MAYHEM_URL=${{ inputs.mayhem_url }}" >> $env:GITHUB_ENV
+        echo "WORKSPACE=${{ inputs.workspace }}" >> $env:GITHUB_ENV
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+    # Step 4: Lowercase github.repository
+    - name: Lowercase GitHub repository
+      shell: pwsh
+      run: |
+        $repoName = $env:GITHUB_REPOSITORY.ToLower()
+        echo "REPO_NAME=$repoName" >> $env:GITHUB_ENV
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    
-    # Perform Mayhem Run
-    - name: Set up MSBuild environment and run PowerShell script
+
+    # Set up MSBuild environment and run PowerShell script
+    - name: Build with MSBuild using PowerShell script
+      shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         pwsh ./cli/run_mcode.ps1
-      shell: cmd
-        
-
-    # - name: Start Code analysis
-    #   uses: forallsecure/mcode-action@v1
-    #   with:
-    #     mayhem-url: ${{ env.MAYHEM_URL }}
-    #     mayhem-token: ${{ env.MAYHEM_TOKEN }}
-    #     owner: ${{ env.WORKSPACE }}
-    #     args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --duration 600
-    #     sarif-output: code-sarif/
-    #     coverage-output: car-coverage/
-
-
-   
