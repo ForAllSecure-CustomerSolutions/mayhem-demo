@@ -52,11 +52,15 @@ jobs:
 
         
 
-          echo "Get-ChildItem -Path C:\Program Files (x86)"
           echo "cd to c"
           cd C:\
+          pwd
           Get-ChildItem -Recurse -File | Where-Object { $_.Name -eq "mayhem.exe" }
 
+          echo "cd to d"
+          cd D:\
+          pwd
+          Get-ChildItem -Recurse -File | Where-Object { $_.Name -eq "mayhem.exe" }
       
 
           # Add Mayhem CLI to PATH for the current process
