@@ -48,10 +48,23 @@ jobs:
           echo "MAYHEM_URL=${{ inputs.mayhem_url }}" >> $env:GITHUB_ENV
           echo "WORKSPACE=${{ inputs.workspace }}" >> $env:GITHUB_ENV
 
-      - name: Download Mayhem CLI
+      - name: Download and install Mayhem CLI
         run: |
           Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
           Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
+          # Add Mayhem CLI to PATH
+          $mayhemPath = "C:\Program Files\ForAllSecure\Mayhem\bin"
+          [System.Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';' + $mayhemPath, [System.EnvironmentVariableTarget]::Machine)
+          Write-Host "Mayhem CLI installed successfully"
+
+      - name: Authenticate Mayhem CLI
+        shell: pwsh
+        run: |
+          if (-Not $env:MAYHEM_TOKEN) {
+            Write-Error "Mayhem token not set"
+            exit 1
+          }
+          mayhem login $env:MAYHEM_URL $env:MAYHEM_TOKEN
 
       - name: Set up MSBuild environment and build
         shell: cmd
@@ -70,7 +83,7 @@ jobs:
             exit 1
           }
           mayhem package $exePath -o $packageDir
-          
+
           # Ensure the package/testsuite directory exists
           $testSuiteDir = "$packageDir/testsuite"
           if (-Not (Test-Path $testSuiteDir)) {
