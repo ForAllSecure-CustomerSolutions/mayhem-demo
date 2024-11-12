@@ -37,12 +37,12 @@ jobs:
       - name: Authenticate with Mayhem
         shell: pwsh
         run: |
-          if ("${{ secrets.mayhem-token }}" -eq "") {
+          if ("${{ secrets.MAYHEM_TOKEN }}" -eq "") {
             Write-Error "Mayhem token not provided"
             exit 1
           }
           # Set the MAYHEM_TOKEN environment variable
-          echo "MAYHEM_TOKEN=${{ secrets.mayhem-token }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "MAYHEM_TOKEN=${{ secrets.MAYHEM_TOKEN }}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
           # Download and install Mayhem CLI
           Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
@@ -53,7 +53,7 @@ jobs:
           [System.Environment]::SetEnvironmentVariable('PATH', "$env:PATH;$mayhemPath", [System.EnvironmentVariableTarget]::Process)
 
           # Authenticate Mayhem CLI
-          mayhem login "${{ inputs.mayhem_url }}" "${{ secrets.mayhem-token }}"
+          mayhem login "${{ inputs.mayhem_url }}" "${{ secrets.MAYHEM_TOKEN }}"
           Write-Host "Mayhem CLI authenticated successfully"
 
       - name: Set up MSBuild environment and build
