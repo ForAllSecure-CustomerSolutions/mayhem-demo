@@ -256,7 +256,7 @@ And that’s it! You should be able to see results for Mayhem for Code in your p
 
 ### Step 4D: Run Mayhem for Code to analyze Windows applications
 
-This section demonstrates how to test a Windows C++ geofencing application that processes GPS data points to determine if a car is within a predefined boundary. By leveraging Mayhem, this demo can uncover *exploitable* vulnerabilities.
+This section demonstrates how to analyze a Windows C++ geofencing application that processes GPS data points to determine if a car is within a predefined boundary. By leveraging Mayhem, this demo can uncover *exploitable* vulnerabilities.
 
 #### Prerequisites
 
@@ -274,7 +274,7 @@ The geofencing demo can be set up, packaged, and executed using the PowerShell s
    Launch the Developer PowerShell for Visual Studio to ensure all necessary environment variables are set.
 
 2. **Run the Example Script**  
-   Execute the provided [run_mcode.ps1](./cli/run_mcode.ps1) script to build, package, and perform the Mayhem run,
+   Execute the provided [run_mcode.ps1](./cli/run_mcode.ps1) script to build, package, and perform the Mayhem run.
 
 #### Usage Example for Geofencing Application
 
