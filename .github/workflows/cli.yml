@@ -34,9 +34,24 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Set default values for inputs
+        shell: pwsh
+        run: |
+          # Overwrite with default values if empty
+          $mayhemUrl = if ([string]::IsNullOrEmpty("${{ inputs.mayhem_url }}")) { 'https://app.mayhem.security' } else { "${{ inputs.mayhem_url }}" }
+          $workspace = if ([string]::IsNullOrEmpty("${{ inputs.workspace }}")) { 'platform-demo' } else { "${{ inputs.workspace }}" }
+          
+          echo "MAYHEM_URL=$mayhemUrl" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "WORKSPACE=$workspace" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+
+
       - name: Authenticate with Mayhem
         shell: pwsh
         run: |
+          Write-Host "Mayhem URL set to: $mayhemUrl"
+          Write-Host "Workspace set to: $workspace"
+
           # Set the MAYHEM_TOKEN environment variable
           echo "MAYHEM_TOKEN=${{ secrets.MAYHEM_TOKEN }}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
