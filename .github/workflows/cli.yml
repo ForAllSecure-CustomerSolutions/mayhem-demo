@@ -56,7 +56,7 @@ jobs:
       
 
           # Add Mayhem CLI to PATH for the current process
-          $mayhemPath = "C:\Program Files\ForAllSecure\Mayhem\bin"
+          $mayhemPath = "C:\Program Files (x86)\Mayhem\"
           [System.Environment]::SetEnvironmentVariable('PATH', "$env:PATH;$mayhemPath", [System.EnvironmentVariableTarget]::Process)
 
           # Authenticate Mayhem CLI
