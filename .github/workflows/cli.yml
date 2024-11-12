@@ -45,10 +45,11 @@ jobs:
           Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
 
           # Add Mayhem CLI to PATH for the current process
-          #$mayhemPath = "C:\Program Files (x86)\Mayhem\"
-          #[System.Environment]::SetEnvironmentVariable('PATH', "$env:PATH;$mayhemPath", [System.EnvironmentVariableTarget]::Process)
+          $mayhemPath = "C:\Program Files (x86)\Mayhem\"
+          [System.Environment]::SetEnvironmentVariable('PATH', "$env:PATH;$mayhemPath", [System.EnvironmentVariableTarget]::Process)
 
-          echo "C:\Program Files (x86)\Mayhem" | Out-File -FilePath $env:GITHUB_PATH -Append
+          $mayhemPath = "C:\Program Files (x86)\Mayhem\mayhem.exe"
+          Write-Host "Mayhem installed at $mayhemPath"
 
           # Authenticate Mayhem CLI
           mayhem login "https://app.mayhem.security" "${{ secrets.MAYHEM_TOKEN }}"
@@ -70,6 +71,9 @@ jobs:
             Write-Error "Executable not found at $exePath"
             exit 1
           }
+          $mayhemPath = "C:\Program Files (x86)\Mayhem\mayhem.exe"
+          Write-Host "Mayhem installed at $mayhemPath"
+
           mayhem package $exePath -o $packageDir
 
           # Ensure the package/testsuite directory exists
