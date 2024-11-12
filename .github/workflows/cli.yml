@@ -44,16 +44,13 @@ jobs:
           Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
           Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
 
-          # Add Mayhem CLI to PATH for the current process
-          $mayhemPath = "C:\Program Files (x86)\Mayhem\"
-          [System.Environment]::SetEnvironmentVariable('PATH', "$env:PATH;$mayhemPath", [System.EnvironmentVariableTarget]::Process)
 
           $mayhemPath = "C:\Program Files (x86)\Mayhem\mayhem.exe"
           Write-Host "Mayhem installed at $mayhemPath"
           echo "MAYHEM_PATH=C:\Program Files (x86)\Mayhem\mayhem.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
 
           # Authenticate Mayhem CLI
-          mayhem login "https://app.mayhem.security" "${{ secrets.MAYHEM_TOKEN }}"
+          &$env:MAYHEM_PATH login "https://app.mayhem.security" "${{ secrets.MAYHEM_TOKEN }}"
           Write-Host "Mayhem CLI authenticated successfully"
 
       - name: Set up MSBuild environment and build
@@ -92,4 +89,4 @@ jobs:
       - name: Run Mayhem
         shell: pwsh
         run: |
-          &$mayhemPath run cli/package --owner $env:WORKSPACE --project mayhem-demo --target cli
+          &$env:MAYHEM_PATH run cli/package --owner $env:WORKSPACE --project mayhem-demo --target cli
