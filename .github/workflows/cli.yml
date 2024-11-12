@@ -75,4 +75,4 @@ jobs:
       - name: Run Mayhem tests
         shell: pwsh
         run: |
-          &$env:MAYHEM_PATH run cli/package --owner $env:WORKSPACE --project mayhem-demo --target cli --duration 5m
+          &$env:MAYHEM_PATH run cli/package --owner $env:WORKSPACE --project mayhem-demo --target cli 
