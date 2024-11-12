@@ -1,4 +1,4 @@
-name: Mayhem CI
+name: Windows CLI
 
 on:
   push:
@@ -17,10 +17,6 @@ on:
         required: true
         default: 'platform-demo'
         type: string
-    secrets:
-      mayhem-token:
-        description: 'Mayhem Token'
-        required: false
 
 env:
   REGISTRY: ghcr.io
@@ -30,80 +26,57 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
           submodules: recursive
 
-      - name: Set default values for inputs
+      - name: Set default input values
         shell: pwsh
         run: |
-          # Overwrite with default values if empty
           $mayhemUrl = if ([string]::IsNullOrEmpty("${{ inputs.mayhem_url }}")) { 'https://app.mayhem.security' } else { "${{ inputs.mayhem_url }}" }
           $workspace = if ([string]::IsNullOrEmpty("${{ inputs.workspace }}")) { 'platform-demo' } else { "${{ inputs.workspace }}" }
-          
           echo "MAYHEM_URL=$mayhemUrl" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "WORKSPACE=$workspace" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-
+      - name: Install Mayhem CLI
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
+          Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
+          echo "MAYHEM_PATH=C:\Program Files (x86)\Mayhem\mayhem.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Authenticate with Mayhem
         shell: pwsh
         run: |
-          Write-Host "Mayhem URL set to: $mayhemUrl"
-          Write-Host "Workspace set to: $workspace"
+          &$env:MAYHEM_PATH login "$env:MAYHEM_URL" "${{ secrets.MAYHEM_TOKEN }}"
 
-          # Set the MAYHEM_TOKEN environment variable
-          echo "MAYHEM_TOKEN=${{ secrets.MAYHEM_TOKEN }}" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-          # Download and install Mayhem CLI
-          Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
-          Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
-
-
-          $mayhemPath = "C:\Program Files (x86)\Mayhem\mayhem.exe"
-          Write-Host "Mayhem installed at $mayhemPath"
-          echo "MAYHEM_PATH=C:\Program Files (x86)\Mayhem\mayhem.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
-      - name: Authenticate Mayhem CLI
-        shell: pwsh
-        run: |
-          # Authenticate Mayhem CLI
-          &$env:MAYHEM_PATH login "https://app.mayhem.security" "${{ secrets.MAYHEM_TOKEN }}"
-          Write-Host "Mayhem CLI authenticated successfully"
-
-      - name: Set up MSBuild environment and build
+      - name: Set up MSBuild environment
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+
+      - name: Build project
+        shell: cmd
+        run: |
           cd cli
           msbuild geofencing.sln
 
-      - name: Package the executable for Mayhem
+      - name: Package the executable
         shell: pwsh
         run: |
           $packageDir = "cli/package"
           $exePath = "cli/x64/Debug/geofencing.exe"
-          if (-Not (Test-Path $exePath)) {
-            Write-Error "Executable not found at $exePath"
-            exit 1
-          }
-          Write-Host "Mayhem installed at &$env:MAYHEM_PATH"
-
           &$env:MAYHEM_PATH package $exePath -o $packageDir
 
-          # Ensure the package/testsuite directory exists
-          $testSuiteDir = "$packageDir/testsuite"
-          if (-Not (Test-Path $testSuiteDir)) {
-            New-Item -ItemType Directory -Path $testSuiteDir
-          }
-
-          # Copy test files
-          if (Test-Path "cli/testsuite") {
-            Copy-Item -Path "cli/testsuite/*" -Destination $testSuiteDir -Recurse
-          } else {
-            Write-Host "No testsuite directory found."
-          }
-
-      - name: Run Mayhem
+      - name: Copy testsuite files
         shell: pwsh
         run: |
-          &$env:MAYHEM_PATH run cli/package --owner $env:WORKSPACE --project mayhem-demo --target cli
+          $testSuiteDir = "cli/package/testsuite"
+          Copy-Item -Path "cli/testsuite/*" -Destination $testSuiteDir -Recurse
+
+
+      - name: Run Mayhem tests
+        shell: pwsh
+        run: |
+          &$env:MAYHEM_PATH run cli/package --owner $env:WORKSPACE --project mayhem-demo --target cli --duration 5m
