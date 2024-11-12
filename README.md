@@ -254,25 +254,9 @@ And that’s it! You should be able to see results for Mayhem for Code in your p
   - `--duration 1800` tells Mayhem to run analysis for up to 30 minutes. (If you
     leave this off, Mayhem will continually pentest your app.)
 
-## Next Steps
+### Step 4D: Run Mayhem for Code to analyze Windows applications
 
-Now that you’ve run Mayhem on this app, let's look at how to get you started on
-your own apps. Here are some great starting points to bookmark:
-
-  * **Documentation:** We’ve compiled extensive documentation and tutorials online at [https://app.mayhem.security/docs/overview/](https://app.mayhem.security/docs/overview/)
-
-  * **Code Examples:** Mayhem for Code programming language examples at
-    [https://github.com/ForAllSecure/mayhem-examples](https://github.com/ForAllSecure/mayhem-examples) 
-
-  * **OSS Examples:** Sometimes examples are the best way to learn, and we’ve
-    got you covered.  View over 1500 repositories that have integrated Mayhem
-    at
-    [https://github.com/orgs/mayhemheroes/repositories](https://github.com/orgs/mayhemheroes/repositories)
-
-
-### Step 4D: Windows Geofencing Demo with Mayhem
-
-This section demonstrates how to test a Windows C++ geofencing application that processes GPS data points to determine if a car is within a predefined boundary. By leveraging Mayhem, this demo can uncover exploitable vulnerabilities.
+This section demonstrates how to test a Windows C++ geofencing application that processes GPS data points to determine if a car is within a predefined boundary. By leveraging Mayhem, this demo can uncover *exploitable* vulnerabilities.
 
 #### Prerequisites
 
@@ -290,12 +274,26 @@ The geofencing demo can be set up, packaged, and executed using the PowerShell s
    Launch the Developer PowerShell for Visual Studio to ensure all necessary environment variables are set.
 
 2. **Run the Example Script**  
-   Execute the provided [run_mcode.ps1](./cli/run_mcode.ps1) script to build, package, and perform the Mayhem run
+   Execute the provided [run_mcode.ps1](./cli/run_mcode.ps1) script to build, package, and perform the Mayhem run,
 
 #### Usage Example for Geofencing Application
 
 The geofencing binary expects an input file containing GPS coordinates followed by a car identifier. See [coordinates.txt](./cli/testsuite/coordinates.txt) file for more details.
 
+## Next Steps
+
+Now that you’ve run Mayhem on this app, let's look at how to get you started on
+your own apps. Here are some great starting points to bookmark:
+
+  * **Documentation:** We’ve compiled extensive documentation and tutorials online at [https://app.mayhem.security/docs/overview/](https://app.mayhem.security/docs/overview/)
+
+  * **Code Examples:** Mayhem for Code programming language examples at
+    [https://github.com/ForAllSecure/mayhem-examples](https://github.com/ForAllSecure/mayhem-examples) 
+
+  * **OSS Examples:** Sometimes examples are the best way to learn, and we’ve
+    got you covered.  View over 1500 repositories that have integrated Mayhem
+    at
+    [https://github.com/orgs/mayhemheroes/repositories](https://github.com/orgs/mayhemheroes/repositories)
 
 ## License
 
