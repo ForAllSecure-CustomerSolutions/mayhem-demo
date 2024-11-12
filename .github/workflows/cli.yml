@@ -37,30 +37,31 @@ jobs:
       - name: Set Mayhem token
         shell: pwsh
         run: |
-          if ($env:mayhem_token -ne "") {
-            Write-Host "::add-mask::$env:mayhem_token"
-            echo "MAYHEM_TOKEN=$env:mayhem_token" >> $env:GITHUB_ENV
+          if ("${{ secrets.mayhem-token }}" -ne "") {
+            Write-Host "::add-mask::${{ secrets.mayhem-token }}"
+            echo "MAYHEM_TOKEN=${{ secrets.mayhem-token }}" | Out-File -FilePath $env:GITHUB_ENV -Append
           }
 
       - name: Set default inputs if not provided
         shell: pwsh
         run: |
-          echo "MAYHEM_URL=${{ inputs.mayhem_url }}" >> $env:GITHUB_ENV
-          echo "WORKSPACE=${{ inputs.workspace }}" >> $env:GITHUB_ENV
+          echo "MAYHEM_URL=${{ inputs.mayhem_url }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "WORKSPACE=${{ inputs.workspace }}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Download and install Mayhem CLI
+        shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
           Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
           # Add Mayhem CLI to PATH
           $mayhemPath = "C:\Program Files\ForAllSecure\Mayhem\bin"
-          [System.Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';' + $mayhemPath, [System.EnvironmentVariableTarget]::Machine)
+          [System.Environment]::SetEnvironmentVariable('PATH', "$env:PATH;$mayhemPath", [System.EnvironmentVariableTarget]::Process)
           Write-Host "Mayhem CLI installed successfully"
 
       - name: Authenticate Mayhem CLI
         shell: pwsh
         run: |
-          if (-Not $env:MAYHEM_TOKEN) {
+          if (-not $env:MAYHEM_TOKEN) {
             Write-Error "Mayhem token not set"
             exit 1
           }
