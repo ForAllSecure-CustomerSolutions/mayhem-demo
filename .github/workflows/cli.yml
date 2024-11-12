@@ -48,7 +48,9 @@ jobs:
           $mayhemPath = "C:\Program Files (x86)\Mayhem\mayhem.exe"
           Write-Host "Mayhem installed at $mayhemPath"
           echo "MAYHEM_PATH=C:\Program Files (x86)\Mayhem\mayhem.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
-
+      - name: Authenticate Mayhem CLI
+        shell: pwsh
+        run: |
           # Authenticate Mayhem CLI
           &$env:MAYHEM_PATH login "https://app.mayhem.security" "${{ secrets.MAYHEM_TOKEN }}"
           Write-Host "Mayhem CLI authenticated successfully"
