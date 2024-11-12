@@ -50,6 +50,7 @@ jobs:
 
           $mayhemPath = "C:\Program Files (x86)\Mayhem\mayhem.exe"
           Write-Host "Mayhem installed at $mayhemPath"
+          echo "MAYHEM_PATH=C:\Program Files (x86)\Mayhem\mayhem.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
 
           # Authenticate Mayhem CLI
           mayhem login "https://app.mayhem.security" "${{ secrets.MAYHEM_TOKEN }}"
@@ -71,9 +72,9 @@ jobs:
             Write-Error "Executable not found at $exePath"
             exit 1
           }
-          Write-Host "Mayhem installed at $mayhemPath"
+          Write-Host "Mayhem installed at &$env:MAYHEM_PATH"
 
-          &$mayhemPath package $exePath -o $packageDir
+          &$env:MAYHEM_PATH package $exePath -o $packageDir
 
           # Ensure the package/testsuite directory exists
           $testSuiteDir = "$packageDir/testsuite"
