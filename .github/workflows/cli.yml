@@ -37,6 +37,8 @@ jobs:
       - name: Authenticate with Mayhem
         shell: pwsh
         run: |
+          pwd
+
           if ("${{ secrets.MAYHEM_TOKEN }}" -eq "") {
             Write-Error "Mayhem token not provided"
             exit 1
@@ -46,7 +48,12 @@ jobs:
 
           # Download and install Mayhem CLI
           Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
-          Start-Process msiexec.exe -ArgumentList "/i mayhem.msi" -Wait
+          # Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
+
+          Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart /l*v install_log.txt" -Wait
+          Get-Content install_log.txt
+          ls
+      
 
           # Add Mayhem CLI to PATH for the current process
           $mayhemPath = "C:\Program Files\ForAllSecure\Mayhem\bin"
