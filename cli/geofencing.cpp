@@ -82,7 +82,7 @@ void logGPSPoints(const std::vector<GPSPoint>& points, const std::string& carIde
 
     // Copies the log string into a fixed-size buffer without checking its length.
     // If logString is longer than 200 characters, it will cause a buffer overflow.
-    strcpy(logBuffer, logString.c_str()); // Potential vulnerability
+    strcpy(logBuffer, logString.c_str()); 
 
     std::cout << "Logging GPS Points: \n" << logBuffer << std::endl;
 }
