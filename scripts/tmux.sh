@@ -5,7 +5,7 @@ set -euo pipefail
 
 MAYHEM_URL="https://app.mayhem.security"  # Mayhem URL to use
 
-WORKSPACE="forallsecure-demo"   # Workspace for all results
+WORKSPACE="platform-demo"   # Workspace for all results
 
 # From docker-compose.yml. Note do not add a trailing slash
 IMAGE_PREFIX="ghcr.io/forallsecure-customersolutions/mayhem-demo" 
@@ -164,7 +164,7 @@ run_code() {
   tmux send-keys -t $SESSION:$window "make" C-m
  
   # Download a completed run with a crasher. 
-  tmux send-keys -t $SESSION:$window "mayhem download -o ./results ${WORKSPACE}/mayhem-demo/car-done" C-m
+  tmux send-keys -t $SESSION:$window "mayhem download -o ./results demos/mayhem-demo/car-done" C-m
 
   # Set up running the crasher. 
   tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/fa7f316850f9243a65be2e2bc1940e316be0748231204a3f4238dccf731911f9"
