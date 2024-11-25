@@ -14,5 +14,8 @@ test: $(TESTS)
 upload: $(TESTS)
 	@for test in $^; do \
 		echo "- Running $$test..."; \
-		./gps_uploader  $$test http://api:8000/location; \
+		./gps_uploader  $$test http://localhost:8000/location; \
 	done
+
+clean:
+	-rm -f gps_uploader

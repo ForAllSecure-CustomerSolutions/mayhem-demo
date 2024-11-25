@@ -29,6 +29,7 @@ get_os_flavor() {
     else
       echo "unknown"
     fi
+  fi
 }
 
 # Check that we have everything we need in the environment
@@ -120,7 +121,7 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 fi
 
 run_mdsbom_dind() {
-  window=2
+  window=3
   tmux new-window -t $SESSION:$window -n "mdsbom-dind"
   cmd="docker run \
           -e DOCKER_USERNAME \
@@ -143,7 +144,7 @@ run_mapi() {
   window=0
   tmux rename-window -t $SESSION:$window "api"
   tmux send-keys -t $SESSION:$window "docker compose up --build -d" C-m
-  tmux send-keys -t $SESSION:$window "# Make sure you wait for everything to come up" C-m # Wait for everything to come up
+  tmux send-keys -t $SESSION:$window "export SKIP_MAPI_AUTO_UPDATE=1" C-m
   tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/mayhem-demo/api 1m http://localhost:8000/openapi.json --url http://localhost:8000 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules" 
 }
 
@@ -153,7 +154,7 @@ run_code() {
   # This window sets up a command to run.  The idea is you press "enter", and it kicks off a run. You move to window 2.
   tmux new-window -t $SESSION:$window -n "code"
   tmux send-keys -t $SESSION:$window "cd car" C-m
-  tmux send-keys -t $SESSION:$window "mayhem run --image ${IMAGE_PREFIX}/car .  # kick off a new mayhem run"
+  tmux send-keys -t $SESSION:$window "mayhem run --image ${IMAGE_PREFIX}/car ." # kick off a new Mayhem run
 
   tmux split-window -v 
 
@@ -179,6 +180,7 @@ tmux new-session -d -s $SESSION
 tmux set-option -g mouse on
 
 run_mdsbom # or run_mdsbom_dind
+run_mdsbom_dind
 run_mapi
 run_code
 
