@@ -136,3 +136,8 @@ docker-compose.override.yml
 __pycache__/
 .docker
 
+# Visual Studio
+.vs
+x64/
+package/
+
