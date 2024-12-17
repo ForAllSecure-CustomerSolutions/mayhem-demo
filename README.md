@@ -42,6 +42,10 @@ flowchart LR;
   and UI. Each is built with OSS components and has vulnerabilities both on and
   off the attack surface.
 
+- **Windows Application Security**: The Windows Geofencing application takes a list of GPS coordinates and evaluates whether a vehicle is with the boundary. The source [./cli/geofencing.cpp](./cli/geofencing.cpp) contains vulnerabilites including:
+
+* Buffer Overflow 
+* Divide By Zero
 
 ## Running the App
 
