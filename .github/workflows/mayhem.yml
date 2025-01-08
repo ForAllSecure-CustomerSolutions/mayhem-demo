@@ -21,7 +21,7 @@ on:
       mayhem-token:
         description: 'Mayhem Token'
         required: false
-
+  workflow_dispatch: 
 env:
   REGISTRY: ghcr.io
 
