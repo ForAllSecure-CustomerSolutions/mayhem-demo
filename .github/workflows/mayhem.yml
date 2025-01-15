@@ -229,7 +229,7 @@ jobs:
       id: upload-api
       uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: dsbom-car.sarif
+        sarif_file: dsbom-api.sarif
         category: Dynamic-SBOM/api
 
     - name: Dismiss issues that were not observed at runtime
