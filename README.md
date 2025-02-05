@@ -42,6 +42,10 @@ flowchart LR;
   and UI. Each is built with OSS components and has vulnerabilities both on and
   off the attack surface.
 
+- **Windows Application Security**: The Windows Geofencing application takes a list of GPS coordinates and evaluates whether a vehicle is with the boundary. The source [./cli/geofencing.cpp](./cli/geofencing.cpp) contains vulnerabilites including:
+
+* Buffer Overflow 
+* Divide By Zero
 
 ## Running the App
 
@@ -254,6 +258,32 @@ And that’s it! You should be able to see results for Mayhem for Code in your p
   - `--duration 1800` tells Mayhem to run analysis for up to 30 minutes. (If you
     leave this off, Mayhem will continually pentest your app.)
 
+### Step 4D: Run Mayhem for Code to analyze Windows applications
+
+This section demonstrates how to analyze a Windows C++ geofencing application that processes GPS data points to determine if a car is within a predefined boundary. By leveraging Mayhem, this demo can uncover *exploitable* vulnerabilities.
+
+#### Prerequisites
+
+Before proceeding, ensure you have completed the **Mayhem CLI setup and authentication** as outlined in [Step 2](#step-2-install-the-mayhem-cli).
+
+Additionally, you'll need:
+
+1. **Visual Studio 2022**: Install with the C++ development workload.
+
+#### Running the Geofencing Demo
+
+The geofencing demo can be set up, packaged, and executed using the PowerShell script located at [run_mcode.ps1](./cli/run_mcode.ps1). This script serves as a detailed example of the entire process. To run the demo, follow these instructions:
+
+1. **Open Developer PowerShell for Visual Studio 2022**  
+   Launch the Developer PowerShell for Visual Studio to ensure all necessary environment variables are set.
+
+2. **Run the Example Script**  
+   Execute the provided [run_mcode.ps1](./cli/run_mcode.ps1) script to build, package, and perform the Mayhem run.
+
+#### Usage Example for Geofencing Application
+
+The geofencing binary expects an input file containing GPS coordinates followed by a car identifier. See [coordinates.txt](./cli/testsuite/coordinates.txt) file for more details.
+
 ## Next Steps
 
 Now that you’ve run Mayhem on this app, let's look at how to get you started on
@@ -268,7 +298,6 @@ your own apps. Here are some great starting points to bookmark:
     got you covered.  View over 1500 repositories that have integrated Mayhem
     at
     [https://github.com/orgs/mayhemheroes/repositories](https://github.com/orgs/mayhemheroes/repositories)
-
 
 ## License
 
