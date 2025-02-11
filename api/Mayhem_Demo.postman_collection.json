@@ -1,0 +1,151 @@
+{
+	"info": {
+		"_postman_id": "a477a594-657b-4908-a134-d22bbe5347f9",
+		"name": "Mayhem Demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "39522732",
+		"_collection_link": "https://forallsecure.postman.co/workspace/ForAllSecure~f04a9aba-5a12-403d-8dab-3d52d4c41fb0/collection/39522732-7d445e73-abcb-4de1-b848-f8a80d3c093c?action=share&source=collection_link&creator=39522732"
+	},
+	"item": [
+		{
+			"name": "Get Info",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/info",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Locations",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/locations",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"locations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post Location",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"latitude\": \"{{latitude}}\",\r\n  \"longitude\": \"{{longitute}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/location",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"location"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Fuzz URL",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/:variable/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						":variable",
+						""
+					],
+					"variable": [
+						{
+							"key": "variable",
+							"value": "{{variable}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "latitude",
+			"value": "1",
+			"type": "number"
+		},
+		{
+			"key": "longitute",
+			"value": "1",
+			"type": "number"
+		},
+		{
+			"key": "variable",
+			"value": "info",
+			"type": "string"
+		},
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}

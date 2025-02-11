@@ -174,6 +174,11 @@ docker run -it -e MAPI_TOKEN <token> forallsecure/mapi:latest run --url 'https:/
 runs. `mapi` will create new locations each time you run it in redis, and can
 quickly create really long responses. 
 
+**Postman:** You can run the mapi demo using the postman collection in the /api directory. Run `docker compose up` and then the following mapi command to exercise the colelction:
+```
+mapi run mayhem-demo/api 1m api/Mayhem_Demo.postman_collection.json --url http://localhost:8000 --html mapi.html --interactive --basic-auth "me@me.com:123456" --experimental-rules --ignore-rule internal-server-error
+```
+
 
 ### Step 4b: Run Mayhem Dynamic SBOM to identify results on the attack surface
 
