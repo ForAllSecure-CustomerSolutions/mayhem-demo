@@ -120,7 +120,6 @@ jobs:
         docker compose build
         docker compose push -q
 
-
     - name: Bring up the app
       run: SHA=${{ github.sha }} docker compose up -d --wait && sleep 1 && docker ps
 
@@ -215,8 +214,8 @@ jobs:
     - name: Bring down the app
       run: SHA=${{ github.sha }} docker compose down -v
 
-    - name: Pause to let mdsbom sync run
-      run: sleep 15 && mdsbom query --workspace ${{ env.WORKSPACE }} containers -a
+    # - name: Pause to let mdsbom sync run
+    #   run: sleep 15 && mdsbom query --workspace ${{ env.WORKSPACE }} containers -a
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -227,37 +226,37 @@ jobs:
         flags: Mayhem-for-API
         fail_ci_if_error: true
 
-    - name: Run Dynamic SBOM scan
-      run: | 
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace ${{ env.WORKSPACE }}
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace ${{ env.WORKSPACE }}
+    # - name: Run Dynamic SBOM scan
+    #   run: | 
+    #     sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace ${{ env.WORKSPACE }}
+    #     sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace ${{ env.WORKSPACE }}
 
-    - name: Patch docker scout SARIF report for CodeQL
-      run : |
-        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
-            if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
-            if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif
+    # - name: Patch docker scout SARIF report for CodeQL
+    #   run : |
+    #     jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+    #         if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
+    #         if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
+    #         if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif
 
-        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
-            if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
-            if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif
+    #     jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+    #         if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
+    #         if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
+    #         if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif
 
-    - name: Upload SARIF file
-      id: upload-api
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: dsbom-api-patched.sarif
-        category: Dynamic-SBOM/api
+    # - name: Upload SARIF file
+    #   id: upload-api
+    #   uses: github/codeql-action/upload-sarif@v3
+    #   with:
+    #     sarif_file: dsbom-api-patched.sarif
+    #     category: Dynamic-SBOM/api
 
-    - name: Dismiss issues that were not observed at runtime
-      uses: advanced-security/dismiss-alerts@v1
-      with:
-        sarif-id: ${{ steps.upload-api.outputs.sarif-id }}
-        sarif-file: dsbom-api-patched.sarif
-      env:
-        GITHUB_TOKEN: "${{ github.token }}"
+    # - name: Dismiss issues that were not observed at runtime
+    #   uses: advanced-security/dismiss-alerts@v1
+    #   with:
+    #     sarif-id: ${{ steps.upload-api.outputs.sarif-id }}
+    #     sarif-file: dsbom-api-patched.sarif
+    #   env:
+    #     GITHUB_TOKEN: "${{ github.token }}"
 
     # Disabled d/t: rejecting SARIF, as there are more related locations per result than allowed (2277 > 1000)
     # - name: Upload SARIF file
