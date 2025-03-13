@@ -124,7 +124,7 @@ jobs:
       run: SHA=${{ github.sha }} docker compose up -d --wait && sleep 1 && docker ps
 
     - name: Wait for the API to be up
-      run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
+      run: bash -c 'while ! curl -s https://localhost:8443/openapi.json; do sleep 1; done'
 
     - name: Start API analysis
       uses: forallsecure/mapi-action@v1
@@ -135,8 +135,8 @@ jobs:
         mayhem-url: ${{ env.MAYHEM_URL }}
         mayhem-token: ${{ env.MAYHEM_TOKEN }}
         target: ${{ env.WORKSPACE }}/mayhem-demo/api
-        api-url: http://localhost:8000
-        api-spec: http://localhost:8000/openapi.json
+        api-url: https://localhost:8443
+        api-spec: https://localhost:8443/openapi.json
         sarif-report: api.sarif
         run-args: |
                   --experimental-rules
