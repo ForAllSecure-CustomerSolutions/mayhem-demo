@@ -4,10 +4,9 @@ PID=
 # Generate a self-signed certificate on the fly
 mkdir -p /app/certs
 
-# Generate an expired certificate (set validity to -1 day)
-openssl req -x509 -newkey rsa:4096 \
-    -keyout /app/certs/key.pem -out /app/certs/cert.pem \
-    -days -1 -nodes -subj "/CN=localhost"
+# Generate an expired certificate
+openssl req -newkey rsa:4096 -nodes -keyout /app/certs/key.pem -out /app/certs/csr.pem -subj "/CN=localhost"
+openssl x509 -req -in /app/certs/csr.pem -signkey /app/certs/key.pem -out /app/certs/cert.pem -days -1
 
 run_coverage_report() {
     echo "Generating coverage xml report..."
