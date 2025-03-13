@@ -115,7 +115,7 @@ void upload_position(const char* URL, double latitude, double longitude)
 
   printf("Uploading lat %f lon %f to %s\n", latitude, longitude, URL);
   snprintf(command, sizeof(command),
-    "curl -X POST -H \"Content-Type: application/json\"  -u me@me.com:123456 -d '{\"latitude\": %.6f, \"longitude\": %.6f}' %s",
+    "curl -k -X POST -H \"Content-Type: application/json\"  -u me@me.com:123456 -d '{\"latitude\": %.6f, \"longitude\": %.6f}' %s",
     latitude, longitude, URL);
 
   system(command);

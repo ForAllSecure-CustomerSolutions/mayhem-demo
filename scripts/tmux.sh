@@ -68,7 +68,7 @@ run_mapi() {
   tmux rename-window -t $SESSION:$window "api"
   tmux send-keys -t $SESSION:$window "docker compose up --build -d" C-m
   tmux send-keys -t $SESSION:$window "# Make sure you wait for everything to come up" C-m # Wait for everything to come up
-  tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/mayhem-demo/api 1m http://localhost:8000/openapi.json --url http://localhost:8000 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules"
+  tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/mayhem-demo/api 1m https://localhost:8443/openapi.json --url https://localhost:8443 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules"
 }
 
 run_code() {

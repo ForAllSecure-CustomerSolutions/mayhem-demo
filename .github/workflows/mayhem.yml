@@ -154,8 +154,8 @@ jobs:
     #   with:
     #     mayhem-token: $MAYHEM_TOKEN
     #     target: $WORKSPACE/mayhem-demo/api-zap
-    #     api-url: http://localhost:8000
-    #     api-spec: http://localhost:8000/openapi.json
+    #     api-url: https://localhost:8443
+    #     api-spec: https://localhost:8443/openapi.json
     #     sarif-report: api-zap.sarif
     #     run-args: |
     #       --ignore-rule auth-bypass

@@ -23,7 +23,7 @@ const MapView = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/locations', {
+        const response = await axios.get('https://localhost:8443/locations', {
           auth: {
             username: "me@me.com",
             password: "123456"

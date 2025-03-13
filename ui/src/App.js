@@ -13,7 +13,7 @@ function App() {
 
   const handleLogin = async () => {
     try {
-      await axios.get('http://localhost:8000/info', {
+      await axios.get('https://localhost:8443/info', {
         auth: {
           username: username,
           password: password

@@ -60,9 +60,9 @@ Then navigate to [http://localhost:3000](http://localhost:3000). In more detail:
 
   - **UI**: [http://localhost:3000](http://localhost:3000). The default username and password is
     `me@me.com` and `123456`. Written in Javascript React.
-  - **API**: [http://localhost:8000](http://localhost:8000). Written in FastAPI (python).
+  - **API**: [https://localhost:8443](https://localhost:8443). Written in FastAPI (python).
   - **OpenAPI**:
-    [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json).
+    [https://localhost:8443/openapi.json](https://localhost:8443/openapi.json).
     Generated automatically by FastAPI. 
 
 **Note** You can add the --watch flag to sync any changes from the UI or API
@@ -120,10 +120,10 @@ uploads the report to Mayhem for viewing, and also produces a local HTML
 report. 
 
   1. Make sure you have the code running with `docker compose up --build` and
-     that you can reach the API on [http://localhost:8000](http://localhost:8000). 
+     that you can reach the API on [https://localhost:8443](https://localhost:8443). 
 
-  2. Run `mapi run mayhem-demo/api 1m http://localhost:8000/openapi.json --url
-     http://localhost:8000 --html mapi.html --interactive --basic-auth
+  2. Run `mapi run mayhem-demo/api 1m https://localhost:8443/openapi.json --url
+     https://localhost:8443 --html mapi.html --interactive --basic-auth
      "me@me.com:123456" --experimental-rules --ignore-rule
      internal-server-error`
 
@@ -144,12 +144,12 @@ The specific arguments you used were:
     name.  If you want the project in a shared workspace, just prefix the path
     with the workspace name like: `shareworkspace/mayhem-demo/api` 
 
-  * `http://localhost:8000/openapi.json`
+  * `https://localhost:8443/openapi.json`
     the location of the OpenAPI spec.  FastAPI automatically generates one for
     you, as can most frameworks, or write your specification yourself to check
     your implementation. 
 
-  *  `http://localhost:8000/` is an URL to the running API. The host must be
+  *  `https://localhost:8443/` is an URL to the running API. The host must be
      reachable from the host running the `mapi` CLI, but need not be internet
      accessible. 
 
