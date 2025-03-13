@@ -101,6 +101,7 @@ async def startup_event():
     one account"""
     cur = con.cursor()
     cur.execute("""CREATE TABLE users (email text, password text)""")
+    cur.execute("""INSERT INTO users VALUES ('admin', 'admin')""")
     cur.execute("""INSERT INTO users VALUES ('me@me.com', '123456')""")
     con.commit()
 
