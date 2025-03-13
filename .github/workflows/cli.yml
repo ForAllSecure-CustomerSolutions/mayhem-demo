@@ -25,6 +25,8 @@ jobs:
   build:
     runs-on: windows-latest
 
+    if: github.event.pull_request.draft == false
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
