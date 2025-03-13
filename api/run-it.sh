@@ -1,6 +1,11 @@
 #!/bin/bash
 PID=
 
+# Generate a self-signed certificate on the fly
+mkdir -p /app/certs
+openssl req -x509 -newkey rsa:4096 -keyout /app/certs/key.pem -out /app/certs/cert.pem -days 1 -nodes -subj "/CN=localhost"
+
+
 run_coverage_report() {
     echo "Generating coverage xml report..."
     # Stopping uvicorn and letting coverage write the data requires SIGINT here
@@ -19,7 +24,11 @@ run_coverage_report() {
 
 trap run_coverage_report INT TERM
 
-coverage run -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+coverage run -m uvicorn app.main:app \
+    --host 0.0.0.0 --port 8443 \
+    --ssl-keyfile /app/certs/key.pem \
+    --ssl-certfile /app/certs/cert.pem &
+
 PID=$(echo $!)
 
 while true; do
