@@ -8,7 +8,7 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel,  field_validator
 from redis import Redis
@@ -114,6 +114,7 @@ class UserLogin(BaseModel):
 class Location(BaseModel):
     latitude: float
     longitude: float
+    notes: str
 
     @field_validator("latitude")
     def validate_latitude(cls, value):
@@ -137,10 +138,16 @@ async def receive_location(
     location: Location,
     _: Annotated[HTTPBasicCredentials, Depends(get_current_username)],
 ):
-    location_data = {"latitude": location.latitude, "longitude": location.longitude}
+    location_data = {"latitude": location.latitude, "longitude": location.longitude, "notes": location.notes}
 
     redis_client.rpush("locations", json.dumps(location_data))
-    return {"message": "Location received"}
+
+    html_content = f"""
+    <h2>Location</h2>
+    <p>{location.latitude}, {location.longitude}</p>
+    <p>{location.notes}</p>
+    """
+    return HTMLResponse(content=html_content, status_code=200, headers={"Content-Type": "text/html"})
 
 
 @app.get("/locations")
