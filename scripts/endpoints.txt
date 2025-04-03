@@ -1,0 +1,3 @@
+/v3/
+/api/v3/
+/api/v3/openapi.json

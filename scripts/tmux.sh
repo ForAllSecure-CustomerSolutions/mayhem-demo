@@ -53,13 +53,13 @@ build_and_login() {
   fi
 
   echo "Logging in mayhem CLI"
-  mayhem login ${MAYHEM_URL} ${MAYHEM_TOKEN}
+  mayhem login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
 
   echo "Logging in mdsbom CLI ...${MAYHEM_TOKEN}.."
-  mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN}
+  mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
 
   echo "Logging in mapi CLI"
-  mapi login ${MAYHEM_TOKEN}
+  mapi login ${MAYHEM_TOKEN} || true
 }
 
 
@@ -71,8 +71,15 @@ run_mapi() {
   tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/mayhem-demo/api 1m http://localhost:8000/openapi.json --url http://localhost:8000 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules"
 }
 
-run_code() {
+run_mapi_discover() {
   window=1
+  tmux new-window -t $SESSION:$window -n "discover"
+  tmux send-keys -t $SESSION:$window " mapi discover --domains demo-api.mayhem.security --endpoints-file ./scripts/endpoints.txt" C-m
+  tmux send-keys -t $SESSION:$window "mapi discover -p 8443" C-m
+}
+
+run_code() {
+  window=2
 
   # This window sets up a command to run.  The idea is you press "enter", and it kicks off a run. You move to window 2.
   tmux new-window -t $SESSION:$window -n "code"
@@ -95,7 +102,7 @@ run_code() {
 }
 
 run_mdsbom() {
-  window=2
+  window=3
   tmux new-window -t $SESSION:$window -n "mdsbom"
   cmd="mdsbom scout ${IMAGE_PREFIX}/api:latest"
 
@@ -106,7 +113,6 @@ run_mdsbom() {
 
   tmux send-keys -t $SESSION:$window "${cmd}" C-m
 }
-
 
 # Kill old session if still running
 if tmux has-session -t "$SESSION" 2>/dev/null; then
@@ -124,6 +130,7 @@ tmux set-option -g mouse on
 
 run_mdsbom
 run_mapi
+run_mapi_discover
 run_code
 
 tmux attach-session -t $SESSION

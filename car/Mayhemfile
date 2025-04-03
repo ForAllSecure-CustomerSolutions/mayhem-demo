@@ -1,4 +1,4 @@
-project: demos/mayhem-demo
+project: platform-demo/mayhem-demo
 target: car
 advanced_triage: true
 image: dbrumley/car
