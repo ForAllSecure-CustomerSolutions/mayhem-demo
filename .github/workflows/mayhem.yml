@@ -112,7 +112,10 @@ jobs:
       id: build
       run: |
         docker compose pull --ignore-buildable -q
-        
+
+        # Build car image, with metadata
+        docker build -t ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --metadata-file metadata.json car/
+
         # Push with commit sha
         SHA=${{ github.sha }} docker compose build
         SHA=${{ github.sha }} docker compose push -q
@@ -123,10 +126,7 @@ jobs:
       env:
         SOURCE_DATE_EPOCH: 0
         BUILDX_METADATA_PROVENANCE: max
-
-    - name: Extract buildkit metadata
-      run: |
-        echo '${{ steps.build.outputs.metadata }}' > metadata.json
+        DOCKER_BUILDKIT: 1
 
     - name: Upload buildkit metadata artifact
       uses: actions/upload-artifact@v4
