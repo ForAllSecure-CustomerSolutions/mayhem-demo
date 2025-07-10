@@ -19,3 +19,4 @@ upload: $(TESTS)
 
 clean:
 	-rm -f gps_uploader
+	-rm -rf results/

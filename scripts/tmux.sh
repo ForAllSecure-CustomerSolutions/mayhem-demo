@@ -190,8 +190,8 @@ tmux new-session -d -s $SESSION
 
 tmux set-option -g mouse on
 
-run_mdsbom # or run_mdsbom_dind
-# run_mdsbom_dind
+# run_mdsbom
+run_mdsbom_dind
 run_mapi_discover
 run_mapi
 run_code
