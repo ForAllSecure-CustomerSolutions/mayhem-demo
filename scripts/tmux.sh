@@ -7,8 +7,12 @@ MAYHEM_URL="https://app.mayhem.security"  # Mayhem URL to use
 
 WORKSPACE="platform-demo"   # Workspace for all results
 
+PROJECT="mayhem-demo"
+
+CRASHER="8ab41bc79fafd862c2929b32fe8676352ab915cf3e71ac9b82c939308703ab07"
+
 # From docker-compose.yml. Note do not add a trailing slash
-IMAGE_PREFIX="ghcr.io/forallsecure-customersolutions/mayhem-demo" 
+IMAGE_PREFIX="ghcr.io/forallsecure-customersolutions/${PROJECT}" 
 
 # tmux session name
 SESSION="demo-ts"
@@ -68,14 +72,15 @@ run_mapi() {
   tmux rename-window -t $SESSION:$window "api"
   tmux send-keys -t $SESSION:$window "docker compose up --build -d" C-m
   tmux send-keys -t $SESSION:$window "# Make sure you wait for everything to come up" C-m # Wait for everything to come up
-  tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/mayhem-demo/api 1m https://localhost:8443/openapi.json --url https://localhost:8443 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules"
+  tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/${PROJECT}/api 1m https://localhost:8443/openapi.json --url https://localhost:8443 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules"
 }
 
 run_mapi_discover() {
   window=1
   tmux new-window -t $SESSION:$window -n "discover"
-  tmux send-keys -t $SESSION:$window " mapi discover --domains demo-api.mayhem.security --endpoints-file ./scripts/endpoints.txt" C-m
+  # tmux send-keys -t $SESSION:$window " mapi discover --domains demo-api.mayhem.security --endpoints-file ./scripts/endpoints.txt" C-m
   tmux send-keys -t $SESSION:$window "mapi discover -p 8443" C-m
+  tmux send-keys -t $SESSION:$window "mapi describe specification api-specs/localhost-8443-full-spec.json" 
 }
 
 run_code() {
@@ -84,7 +89,7 @@ run_code() {
   # This window sets up a command to run.  The idea is you press "enter", and it kicks off a run. You move to window 2.
   tmux new-window -t $SESSION:$window -n "code"
   tmux send-keys -t $SESSION:$window "cd car" C-m
-  tmux send-keys -t $SESSION:$window "mayhem run --image ${IMAGE_PREFIX}/car .  # kick off a new mayhem run"
+  tmux send-keys -t $SESSION:$window "mayhem run --image ${IMAGE_PREFIX}/car --owner ${WORKSPACE} --project ${PROJECT} ."  # kick off a new mayhem run
 
   tmux split-window -v 
 
@@ -95,10 +100,10 @@ run_code() {
   tmux send-keys -t $SESSION:$window "make" C-m
  
   # Download a completed run with a crasher. 
-  tmux send-keys -t $SESSION:$window "mayhem download -o ./results demos/mayhem-demo/car-done" C-m
+  tmux send-keys -t $SESSION:$window "mayhem download -o ./results ${WORKSPACE}/${PROJECT}/car" C-m
 
   # Set up running the crasher. 
-  tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/fa7f316850f9243a65be2e2bc1940e316be0748231204a3f4238dccf731911f9"
+  tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/${CRASHER}"
 }
 
 run_mdsbom() {

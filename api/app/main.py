@@ -114,7 +114,6 @@ class UserLogin(BaseModel):
 class Location(BaseModel):
     latitude: float
     longitude: float
-    notes: str
 
     @field_validator("latitude")
     def validate_latitude(cls, value):
@@ -138,14 +137,13 @@ async def receive_location(
     location: Location,
     _: Annotated[HTTPBasicCredentials, Depends(get_current_username)],
 ):
-    location_data = {"latitude": location.latitude, "longitude": location.longitude, "notes": location.notes}
+    location_data = {"latitude": location.latitude, "longitude": location.longitude}
 
     redis_client.rpush("locations", json.dumps(location_data))
 
     html_content = f"""
     <h2>Location</h2>
     <p>{location.latitude}, {location.longitude}</p>
-    <p>{location.notes}</p>
     """
     return HTMLResponse(content=html_content, status_code=200, headers={"Content-Type": "text/html"})
 

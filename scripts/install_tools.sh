@@ -24,7 +24,7 @@ install_docker_scout() {
 # Function to install Docker
 # see https://docs.docker.com/engine/install/debian/
 install_docker() {
-    echo "Docker is not installed. Installing Docker Desktop for Linux on Debian..."
+    echo "Docker is not installed. Installing Docker for Linux on Debian..."
 
     # Update the package database
     sudo apt-get update

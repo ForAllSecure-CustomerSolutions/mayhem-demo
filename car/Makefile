@@ -16,3 +16,6 @@ upload: $(TESTS)
 		echo "- Running $$test..."; \
 		./gps_uploader  $$test https://api:8443/location; \
 	done
+
+clean:
+	-rm -f gps_uploader

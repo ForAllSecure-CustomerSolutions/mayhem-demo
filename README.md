@@ -68,8 +68,11 @@ Then navigate to [http://localhost:3000](http://localhost:3000). In more detail:
 **Note** You can add the --watch flag to sync any changes from the UI or API
 files to the running docker container. 
 
+**Note 2:** If you are logging in for the first time and receiving an error, you may 
+need to navigate to the API at [https://localhost:8443/openapi.json](https://localhost:8443/openapi.json) 
+and accept the security exception in your browser. 
 
-**Note 2:** If you've previously run this, please run `docker compose down -v` to
+**Note 3:** If you've previously run this, please run `docker compose down -v` to
 remove any stale volumes. 
 
 ## Getting started with Mayhem
