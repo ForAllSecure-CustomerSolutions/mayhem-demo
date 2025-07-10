@@ -96,24 +96,19 @@ build_and_login() {
   echo "Logging in mayhem CLI"
   mayhem login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
 
-<<<<<<< HEAD
-  echo "Logging in mdsbom CLI ...${MAYHEM_TOKEN}.."
-  mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
-=======
   echo "Logging in mdsbom CLI"
-  mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN}
->>>>>>> origin/mdsbom-docker
+  mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
 
   echo "Logging in mapi CLI"
   mapi login ${MAYHEM_TOKEN} || true
 }
 
-<<<<<<< HEAD
 
 run_mapi() {
   window=0
   tmux rename-window -t $SESSION:$window "api"
   tmux send-keys -t $SESSION:$window "docker compose up --build -d" C-m
+  tmux send-keys -t $SESSION:$window "export SKIP_MAPI_AUTO_UPDATE=1" C-m
   tmux send-keys -t $SESSION:$window "# Make sure you wait for everything to come up" C-m # Wait for everything to come up
   tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/${PROJECT}/api 1m https://localhost:8443/openapi.json --url https://localhost:8443 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules"
 }
@@ -121,7 +116,7 @@ run_mapi() {
 run_mapi_discover() {
   window=1
   tmux new-window -t $SESSION:$window -n "discover"
-  # tmux send-keys -t $SESSION:$window " mapi discover --domains demo-api.mayhem.security --endpoints-file ./scripts/endpoints.txt" C-m
+  # tmux send-keys -t $SESSION:$window "mapi discover --domains demo-api.mayhem.security --endpoints-file ./scripts/endpoints.txt" C-m
   tmux send-keys -t $SESSION:$window "mapi discover -p 8443" C-m
   tmux send-keys -t $SESSION:$window "mapi describe specification api-specs/localhost-8443-full-spec.json" 
 }
@@ -149,8 +144,6 @@ run_code() {
   tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/${CRASHER}"
 }
 
-=======
->>>>>>> origin/mdsbom-docker
 run_mdsbom() {
   window=3
   tmux new-window -t $SESSION:$window -n "mdsbom"
@@ -189,39 +182,6 @@ run_mdsbom_dind() {
           /workspace/scripts/docker_entrypoint.sh"
   tmux send-keys -t $SESSION:$window "${cmd}" C-m
 }
-  
-
-run_mapi() {
-  window=0
-  tmux rename-window -t $SESSION:$window "api"
-  tmux send-keys -t $SESSION:$window "docker compose up --build -d" C-m
-  tmux send-keys -t $SESSION:$window "export SKIP_MAPI_AUTO_UPDATE=1" C-m
-  tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/mayhem-demo/api 1m http://localhost:8000/openapi.json --url http://localhost:8000 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules" 
-}
-
-run_code() {
-  window=1
-
-  # This window sets up a command to run.  The idea is you press "enter", and it kicks off a run. You move to window 2.
-  tmux new-window -t $SESSION:$window -n "code"
-  tmux send-keys -t $SESSION:$window "cd car" C-m
-  tmux send-keys -t $SESSION:$window "mayhem run --image ${IMAGE_PREFIX}/car ." # kick off a new Mayhem run
-
-  tmux split-window -v 
-
-  # Window 2 is a pre-baked run with results. We show replay in this window
-
-  # Download crashing test case payload, to reproduce locally
-  tmux send-keys -t $SESSION:$window "cd car" C-m
-  tmux send-keys -t $SESSION:$window "make" C-m
- 
-  # Download a completed run with a crasher. 
-  tmux send-keys -t $SESSION:$window "mayhem download -o ./results demos/mayhem-demo/car-done" C-m
-
-  # Set up running the crasher. 
-  tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/fa7f316850f9243a65be2e2bc1940e316be0748231204a3f4238dccf731911f9"
-}
-
 
 environment_check
 build_and_login
@@ -231,9 +191,9 @@ tmux new-session -d -s $SESSION
 tmux set-option -g mouse on
 
 run_mdsbom # or run_mdsbom_dind
-run_mdsbom_dind
-run_mapi
+# run_mdsbom_dind
 run_mapi_discover
+run_mapi
 run_code
 
 tmux attach-session -t $SESSION
