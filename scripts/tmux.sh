@@ -17,26 +17,63 @@ IMAGE_PREFIX="ghcr.io/forallsecure-customersolutions/${PROJECT}"
 # tmux session name
 SESSION="demo-ts"
 
+DEBIAN_DIST="debian,ubuntu"
+ARCH_DIST="arch,manjaro"
+RHEL_DIST="fedora,centos,rhel"
+
+get_os_flavor() {
+  if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    if echo "$ID" | grep -q -E "$DEBIAN_DIST"; then
+      DEBIAN_LIKE=1
+    elif echo "$ID" | grep -q -E "$ARCH_DIST"; then
+      ARCH_LIKE=1
+    elif echo "$ID" | grep -q -E "$RHEL_DIST"; then
+      RHEL_LIKE=1
+    else
+      echo "unknown"
+    fi
+  fi
+}
+
 # Check that we have everything we need in the environment
 environment_check() {
-  if [ ! -f /usr/bin/tmux ]; then
-    echo "Installing tmux"
-    sudo apt-get update && sudo apt-get install -y tmux
+  get_os_flavor
+  NEEDS=""
+  if ! command -v tmux &> /dev/null; then
+    echo "Needs: tmux"
+    NEEDS="$NEEDS tmux"
   fi
-  if [ ! -f /usr/bin/curl ]; then
-    echo "Installing curl"
-    sudo apt-get update && sudo apt-get install -y curl
+  if ! command -v curl &> /dev/null; then
+    echo "Needs: curl"
+    NEEDS="$NEEDS curl"
   fi
-  if [ ! -f /usr/bin/git ]; then
-    echo "Installing git"
-    sudo apt-get update && sudo apt-get install -y git
+  if ! command -v git &> /dev/null; then
+    echo "Needs: git"
+    NEEDS="$NEEDS git"
+  fi
+  if ! command -v docker &> /dev/null; then
+    echo "Needs: docker and/or docker-compose"
+    echo "Installation varies depending on your OS. Please see https://docs.docker.com/get-docker/"
+    exit 1
+  fi
+  if [ -n "$NEEDS" ]; then
+    if $DEBIAN_LIKE; then
+      sudo apt-get update && sudo apt-get install -y $NEEDS
+    elif $ARCH_LIKE; then
+      sudo pacman -Sy $NEEDS
+    elif $RHEL_LIKE; then
+      sudo yum install -y $NEEDS
+    else
+      echo "Unknown OS; please install the following and rerun: $NEEDS"
+      exit 1
+    fi
   fi
   if [ ! -d ./car ]; then
     echo "Checking out mayhem-demo in a tempdir"
     cd `mktemp -d`
     git clone https://github.com/ForAllSecure-CustomerSolutions/mayhem-demo.git .
   fi
-
 }
 
 build_and_login() {
@@ -59,13 +96,19 @@ build_and_login() {
   echo "Logging in mayhem CLI"
   mayhem login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
 
+<<<<<<< HEAD
   echo "Logging in mdsbom CLI ...${MAYHEM_TOKEN}.."
   mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
+=======
+  echo "Logging in mdsbom CLI"
+  mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN}
+>>>>>>> origin/mdsbom-docker
 
   echo "Logging in mapi CLI"
   mapi login ${MAYHEM_TOKEN} || true
 }
 
+<<<<<<< HEAD
 
 run_mapi() {
   window=0
@@ -106,6 +149,8 @@ run_code() {
   tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/${CRASHER}"
 }
 
+=======
+>>>>>>> origin/mdsbom-docker
 run_mdsbom() {
   window=3
   tmux new-window -t $SESSION:$window -n "mdsbom"
@@ -126,6 +171,58 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
     tmux kill-session -t "$SESSION"
 fi
 
+run_mdsbom_dind() {
+  window=3
+  tmux new-window -t $SESSION:$window -n "mdsbom-dind"
+  cmd="docker run \
+          -e DOCKER_USERNAME \
+          -e DOCKER_PASSWORD \
+          -e MAYHEM_URL \
+          -e MAYHEM_TOKEN \
+          -v /etc/mdsbom/config.toml:/etc/mdsbom/config.toml \
+          -v $(pwd):/workspace \
+          -it \
+          --rm \
+          --name mdsbom \
+          --privileged \
+          artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest \
+          /workspace/scripts/docker_entrypoint.sh"
+  tmux send-keys -t $SESSION:$window "${cmd}" C-m
+}
+  
+
+run_mapi() {
+  window=0
+  tmux rename-window -t $SESSION:$window "api"
+  tmux send-keys -t $SESSION:$window "docker compose up --build -d" C-m
+  tmux send-keys -t $SESSION:$window "export SKIP_MAPI_AUTO_UPDATE=1" C-m
+  tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/mayhem-demo/api 1m http://localhost:8000/openapi.json --url http://localhost:8000 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules" 
+}
+
+run_code() {
+  window=1
+
+  # This window sets up a command to run.  The idea is you press "enter", and it kicks off a run. You move to window 2.
+  tmux new-window -t $SESSION:$window -n "code"
+  tmux send-keys -t $SESSION:$window "cd car" C-m
+  tmux send-keys -t $SESSION:$window "mayhem run --image ${IMAGE_PREFIX}/car ." # kick off a new Mayhem run
+
+  tmux split-window -v 
+
+  # Window 2 is a pre-baked run with results. We show replay in this window
+
+  # Download crashing test case payload, to reproduce locally
+  tmux send-keys -t $SESSION:$window "cd car" C-m
+  tmux send-keys -t $SESSION:$window "make" C-m
+ 
+  # Download a completed run with a crasher. 
+  tmux send-keys -t $SESSION:$window "mayhem download -o ./results demos/mayhem-demo/car-done" C-m
+
+  # Set up running the crasher. 
+  tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/fa7f316850f9243a65be2e2bc1940e316be0748231204a3f4238dccf731911f9"
+}
+
+
 environment_check
 build_and_login
 
@@ -133,7 +230,8 @@ tmux new-session -d -s $SESSION
 
 tmux set-option -g mouse on
 
-run_mdsbom
+run_mdsbom # or run_mdsbom_dind
+run_mdsbom_dind
 run_mapi
 run_mapi_discover
 run_code
