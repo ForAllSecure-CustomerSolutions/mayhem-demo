@@ -12,7 +12,7 @@ PROJECT="mayhem-demo"
 CRASHER="8ab41bc79fafd862c2929b32fe8676352ab915cf3e71ac9b82c939308703ab07"
 
 # From docker-compose.yml. Note do not add a trailing slash
-IMAGE_PREFIX="ghcr.io/forallsecure-customersolutions/${PROJECT}" 
+IMAGE_PREFIX="ghcr.io/forallsecure-customersolutions/${PROJECT}"
 
 # tmux session name
 SESSION="demo-ts"
@@ -22,7 +22,7 @@ ARCH_DIST="arch,manjaro"
 RHEL_DIST="fedora,centos,rhel"
 
 get_os_flavor() {
-  if [ -f /etc/os-release ]; then
+  if [[ -f /etc/os-release ]]; then
     . /etc/os-release
     if echo "$ID" | grep -q -E "$DEBIAN_DIST"; then
       DEBIAN_LIKE=1
@@ -38,6 +38,10 @@ get_os_flavor() {
 
 # Check that we have everything we need in the environment
 environment_check() {
+  if [[ -z "${MAYHEM_TOKEN}" || -z "${DOCKER_USERNAME}" || -z "${DOCKER_PASSWORD}" ]]; then
+    echo "Some environment variables are not set; please set MAYHEM_TOKEN, DOCKER_USERNAME, and DOCKER_PASSWORD."
+    exit 1
+  fi
   get_os_flavor
   NEEDS=""
   if ! command -v tmux &> /dev/null; then
@@ -57,7 +61,7 @@ environment_check() {
     echo "Installation varies depending on your OS. Please see https://docs.docker.com/get-docker/"
     exit 1
   fi
-  if [ -n "$NEEDS" ]; then
+  if [[ -n "$NEEDS" ]]; then
     if $DEBIAN_LIKE; then
       sudo apt-get update && sudo apt-get install -y $NEEDS
     elif $ARCH_LIKE; then
@@ -69,7 +73,7 @@ environment_check() {
       exit 1
     fi
   fi
-  if [ ! -d ./car ]; then
+  if [[ ! -d ./car ]]; then
     echo "Checking out mayhem-demo in a tempdir"
     cd `mktemp -d`
     git clone https://github.com/ForAllSecure-CustomerSolutions/mayhem-demo.git .
@@ -88,7 +92,7 @@ build_and_login() {
   CONFIG_FILE="$HOME/.config/mayhem/mayhem" MAYHEM_TOKEN=$(awk -F "=" '/^[[:space:]]*token[[:space:]]*=/ { gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2 }' "$CONFIG_FILE")
 
   # Check if the token was extracted
-  if [ -z "$MAYHEM_TOKEN" ]; then
+  if [[ -z "$MAYHEM_TOKEN" ]]; then
     echo "API key not found in ~/.config/mayhem/mayhem. Log in manually and run again."
     exit 1
   fi
@@ -96,11 +100,11 @@ build_and_login() {
   echo "Logging in mayhem CLI"
   mayhem login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
 
-  echo "Logging in mdsbom CLI"
-  mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
+  # echo "Logging in mdsbom CLI"
+  # mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
 
-  echo "Logging in mapi CLI"
-  mapi login ${MAYHEM_TOKEN} || true
+  # echo "Logging in mapi CLI"
+  # mapi login ${MAYHEM_TOKEN} || true
 }
 
 
@@ -119,8 +123,7 @@ run_mapi_discover() {
   tmux new-window -t $SESSION:$window -n "discover"
   # tmux send-keys -t $SESSION:$window "mapi discover --domains demo-api.mayhem.security --endpoints-file ./scripts/endpoints.txt" C-m
   tmux send-keys -t $SESSION:$window "mapi discover -p 8443" C-m
-  tmux send-keys -t $SESSION:$window "mapi describe specification api-specs/localhost-8443-full-spec.json" 
-  tmux send-keys -t $SESSION:$window "mapi describe specification api-specs/localhost-8443-full-spec.json" 
+  tmux send-keys -t $SESSION:$window "mapi describe specification api-specs/localhost-8443-full-spec.json"
 }
 
 run_code() {
@@ -155,7 +158,7 @@ run_mdsbom() {
   cmd="mdsbom scout ${IMAGE_PREFIX}/api:latest"
 
   # mdsbom will not work with an empty workspace name, so only add if necessary
-  if [ -n "$WORKSPACE" ]; then
+  if [[ -n "$WORKSPACE" ]]; then
     cmd="$cmd --workspace ${WORKSPACE}"
   fi
 
@@ -175,16 +178,17 @@ run_mdsbom_dind() {
   cmd="docker run \
           -e DOCKER_USERNAME \
           -e DOCKER_PASSWORD \
-          -e MAYHEM_URL \
+          -e MAYHEM_URL=${MAYHEM_URL} \
           -e MAYHEM_TOKEN \
-          -v /etc/mdsbom/config.toml:/etc/mdsbom/config.toml \
-          -v $(pwd):/workspace \
+          -e WORKSPACE=${WORKSPACE} \
+          -e API_IMAGE=${IMAGE_PREFIX}/api:latest \
+          -v $(pwd)/mdsbom:/mdsbom \
           -it \
           --rm \
           --name mdsbom \
           --privileged \
           artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest \
-          /workspace/scripts/docker_entrypoint.sh"
+          /mdsbom/run_mdsbom.sh"
   tmux send-keys -t $SESSION:$window "${cmd}" C-m
 }
 
@@ -196,9 +200,9 @@ tmux new-session -d -s $SESSION
 tmux set-option -g mouse on
 
 # run_mdsbom
-run_mdsbom_dind
-run_mapi_discover
 run_mapi
+run_mapi_discover
+run_mdsbom_dind
 run_code
 
 tmux attach-session -t $SESSION

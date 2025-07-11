@@ -183,7 +183,19 @@ quickly create really long responses.
 
 **Postman:** You can run the mapi demo using the postman collection id. Run `docker compose up` and then the following mapi command to exercise the collection:
 ```
-mapi run mayhem-demo/api 1m 39522732-7d445e73-abcb-4de1-b848-f8a80d3c093c?access_key=PMAT-01JM2V52G7P5QZ5SEFD9FPPDRX --url http://localhost:8000 --html mapi.html --interactive --basic-auth "me@me.com:123456" --experimental-rules --ignore-rule internal-server-error
+mapi run mayhem-demo/api 1m 39522732-7d445e73-abcb-4de1-b848-f8a80d3c093c?access_key=PMAT-01JM2V52G7P5QZ5SEFD9FPPDRX --url https://localhost:8443 --html mapi.html --interactive --basic-auth "me@me.com:123456" --experimental-rules --ignore-rule internal-server-error
+```
+
+**Discovery:** Our API comes bundled with an OpenAPI spec, but `mapi` also supports endpoint discovery! You can use:
+
+```
+mapi discover -p 8443
+```
+
+to find API endpoints on your local machine, and you can investigate the results with:
+
+```
+mapi describe specification api-specs/localhost-8443-full-spec.json
 ```
 
 
@@ -203,9 +215,15 @@ tool that outputs a CycloneDX or SPDX file.
     [docker](https://docs.docker.com/engine/install/ubuntu/), are logged into
     docker (`docker login`) and have [docker
     scout](https://docs.docker.com/scout/install/) installed. (You may also need to set $DOCKER_USERNAME and $DOCKER_PASSWORD)
-  * You have MDSBOM sync configured under `/etc/mdsbom/config.toml` (see 
-    [here](https://docs.mayhem.security/dynamic-sbom/guides/deployment/#configuring-sync) for more details)
+  * You have a Docker username and token, and have set these with 
+    `export DOCKER_USERNAME=<your docker username>` and `export DOCKER_PASSWORD=<your docker password>`.
+  * You have a Mayhem url and token, and have set these with
+  `export MAYHEM_URL=<your Mayhem URL>` and
+    `export MAYHEM_TOKEN=<your Mayhem API token>`.
 
+_NOTE: For this example, we'll be running `mdsbom` in a docker container (Docker-in-Docker, or DinD). 
+You can also run `mdsbom` directly on your host system by following the instructions for installation 
+here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.mayhem.security/dynamic-sbom/installation/)._
 
 **Steps:**
 
@@ -216,14 +234,12 @@ tool that outputs a CycloneDX or SPDX file.
           -e DOCKER_PASSWORD \
           -e MAYHEM_URL \
           -e MAYHEM_TOKEN \
-          -v /etc/mdsbom/config.toml:/etc/mdsbom/config.toml \
-          -v /var/run/docker.sock:/var/run/docker.sock \
-          -v $(pwd):/workspace \
+          -v $(pwd)/mdsbom:/mdsbom \
           -it \
           --rm \
           --name mdsbom \
           --privileged \
-          artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest ash
+          forallsecure/mdsbom:latest /bin/ash
   ```
 
   2. Log into MDSBOM
@@ -233,17 +249,23 @@ tool that outputs a CycloneDX or SPDX file.
 
   3. Run target container
   ```
-  docker run ghcr.io/forsallsecure-customersolutions/mayhem-demo/api:latest
+  docker run --runtime=mdsbom ghcr.io/forsallsecure-customersolutions/mayhem-demo/api:latest
   ```
 
   4. Stop the container with Ctrl-C
+
+    4a. Make sure the container is recorded properly
+    ```
+    mdsbom query --local containers -a
+    ```
+    This should return the container you just ran.
 
   5. Run MDSBOM
   ```
   mdsbom run scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
   ```    
 
-  6. That’s it! View the results on the Mayhem UI.
+  6. That’s it! You can now view the results on the Mayhem UI.
 
 **Details:**
 
@@ -270,7 +292,8 @@ In more detail, the arguments:
 Tip: You can use `--workspace <name>` to specify a different workspace to
 upload results. 
 
-Tip: All of these commands are in a script under `scripts/mdsbom.sh`. You can run it all at once with `scripts/mdsbom-dind.sh`
+Tip: All of these commands are in a script under `mdsbom/run_mdsbom.sh`. You can pass the script to the `docker run`
+in Step 1 in place of the `/bin/ash` command to run the script automatically.
 
 ### Step 4C: Run Mayhem for Code to find code vulnerabilities
 

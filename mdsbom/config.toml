@@ -7,3 +7,4 @@ api_internal_socket_mode = "660"
 rpc_socket_path = "/run/mdsbom_rpc.sock"
 rpc_socket_owner = "root:mdsbom"
 rpc_socket_mode = "660"
+
