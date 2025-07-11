@@ -93,8 +93,7 @@ Now that you have an account, you can start using Mayhem in your local environme
     [https://app.mayhem.security/-/settings/user/api-tokens](https://app.mayhem.security/-/settings/user/api-tokens),
     which is what you’ll use to log in the CLI to the Mayhem server. 
 
-  * Use the token to log in with your token with `mayhem login https://app.
-    mayhem.security <your API token>`
+  * Use the token to log in with your token with `mayhem login https://app.mayhem.security <your API token>`
 
   <!-- * Mayhem Dynamic SBOM currently has a separate CLI install, and currently
     only supports Linux. Install by following
