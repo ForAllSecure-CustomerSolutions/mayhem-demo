@@ -184,6 +184,7 @@ run_mdsbom_dind() {
           -e API_IMAGE=${IMAGE_PREFIX}/api:latest \
           -v $(pwd)/mdsbom:/mdsbom \
           -it \
+          --platform linux/amd64 \
           --rm \
           --name mdsbom \
           --privileged \

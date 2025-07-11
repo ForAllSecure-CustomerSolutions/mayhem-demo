@@ -236,6 +236,7 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
           -e MAYHEM_TOKEN \
           -v $(pwd)/mdsbom:/mdsbom \
           -it \
+          --platform linux/amd64 \
           --rm \
           --name mdsbom \
           --privileged \
