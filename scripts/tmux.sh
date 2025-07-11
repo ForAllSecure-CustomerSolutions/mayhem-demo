@@ -99,12 +99,6 @@ build_and_login() {
 
   echo "Logging in mayhem CLI"
   mayhem login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
-
-  # echo "Logging in mdsbom CLI"
-  # mdsbom login ${MAYHEM_URL} ${MAYHEM_TOKEN} || true
-
-  # echo "Logging in mapi CLI"
-  # mapi login ${MAYHEM_TOKEN} || true
 }
 
 
@@ -114,7 +108,6 @@ run_mapi() {
   tmux send-keys -t $SESSION:$window "docker compose up --build -d" C-m
   tmux send-keys -t $SESSION:$window "export SKIP_MAPI_AUTO_UPDATE=1" C-m
   tmux send-keys -t $SESSION:$window "# Make sure you wait for everything to come up" C-m # Wait for everything to come up
-  tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/${PROJECT}/api 1m https://localhost:8443/openapi.json --url https://localhost:8443 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules"
   tmux send-keys -t $SESSION:$window "mapi run ${WORKSPACE}/${PROJECT}/api 1m https://localhost:8443/openapi.json --url https://localhost:8443 --sarif mapi.sarif --html mapi.html --interactive --basic-auth 'me@me.com:123456' --ignore-rule internal-server-error --experimental-rules"
 }
 
@@ -133,7 +126,6 @@ run_code() {
   tmux new-window -t $SESSION:$window -n "code"
   tmux send-keys -t $SESSION:$window "cd car" C-m
   tmux send-keys -t $SESSION:$window "mayhem run --image ${IMAGE_PREFIX}/car --owner ${WORKSPACE} --project ${PROJECT} ."  # kick off a new mayhem run
-  tmux send-keys -t $SESSION:$window "mayhem run --image ${IMAGE_PREFIX}/car --owner ${WORKSPACE} --project ${PROJECT} ."  # kick off a new mayhem run
 
   tmux split-window -v 
 
@@ -145,10 +137,8 @@ run_code() {
  
   # Download a completed run with a crasher. 
   tmux send-keys -t $SESSION:$window "mayhem download -o ./results ${WORKSPACE}/${PROJECT}/car" C-m
-  tmux send-keys -t $SESSION:$window "mayhem download -o ./results ${WORKSPACE}/${PROJECT}/car" C-m
 
   # Set up running the crasher. 
-  tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/${CRASHER}"
   tmux send-keys -t $SESSION:$window "./gps_uploader ./results/testsuite/${CRASHER}"
 }
 
@@ -188,7 +178,7 @@ run_mdsbom_dind() {
           --rm \
           --name mdsbom \
           --privileged \
-          artifacts-docker-registry.internal.forallsecure.com/forallsecure/mdsbom:latest \
+          forallsecure/mdsbom:latest \
           /mdsbom/run_mdsbom.sh"
   tmux send-keys -t $SESSION:$window "${cmd}" C-m
 }

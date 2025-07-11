@@ -17,6 +17,4 @@ if ! mdsbom query --format csv --local images | grep -q $API_IMAGE; then
   echo "ERROR: Image $API_IMAGE has not been recorded."
   exit 1
 fi
-# mdsbom query --local containers -a
-# mdsbom query --workspace $WORKSPACE containers -a
 mdsbom scout --workspace $WORKSPACE $API_IMAGE --sca-report-out /tmp/dsbom-api.sarif --full-summary
