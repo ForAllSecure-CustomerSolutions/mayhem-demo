@@ -20,7 +20,7 @@ flowchart LR;
 ```
 
 - **Code Security**: The GPS code is a native app that transmits GPS sensor
-  data to a Cloud API. The source  [./car/gps_uploader.c](./car/gps_uploader.c)
+  data to a Cloud API. The source  [./car/src/gps_uploader.c](./car/src/gps_uploader.c)
   contains vulnerabilities such as:
   * Integer overflow
   * Integer underflow
