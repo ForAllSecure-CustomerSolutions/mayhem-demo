@@ -20,7 +20,7 @@ flowchart LR;
 ```
 
 - **Code Security**: The GPS code is a native app that transmits GPS sensor
-  data to a Cloud API. The source  [./car/gps_uploader.c](./car/gps_uploader.c)
+  data to a Cloud API. The source  [./car/src/gps_uploader.c](./car/src/gps_uploader.c)
   contains vulnerabilities such as:
   * Integer overflow
   * Integer underflow
@@ -254,18 +254,17 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
 
   4. Stop the container with Ctrl-C
 
-    4a. Make sure the container is recorded properly
-    ```
-    mdsbom query --local containers -a
-    ```
-    This should return the container you just ran.
+  5. Make sure the container is recorded properly (this should return the container you just ran)
+  ```
+  mdsbom query --local containers -a
+  ```
 
-  5. Run MDSBOM
+  6. Run MDSBOM
   ```
   mdsbom run scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
   ```    
 
-  6. That’s it! You can now view the results on the Mayhem UI.
+  7. That’s it! You can now view the results on the Mayhem UI.
 
 **Details:**
 
@@ -286,7 +285,7 @@ In more detail, the arguments:
   * `ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest` is path to
     the docker image.
 
-  * ``--sca-report-out dsbom-api.sarif` says to output a SARIF format as file
+  * `--sca-report-out dsbom-api.sarif` says to output a SARIF format as file
     `dsbom-api.sarif`.  
 
 Tip: You can use `--workspace <name>` to specify a different workspace to
