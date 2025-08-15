@@ -6,7 +6,7 @@ mkdir -p /app/certs
 
 # Generate an expired certificate
 openssl req -newkey rsa:4096 -nodes -keyout /app/certs/key.pem -out /app/certs/csr.pem -subj "/CN=localhost" -config /etc/ssl/openssl.cnf -extensions v3_req
-openssl x509 -req -in /app/certs/csr.pem -signkey /app/certs/key.pem -out /app/certs/cert.pem -days -1 -extfile /etc/ssl/openssl.cnf -extensions v3_req
+openssl x509 -req -in /app/certs/csr.pem -signkey /app/certs/key.pem -out /app/certs/cert.pem -not_before 200801010000Z -not_after 201001010000Z -extfile /etc/ssl/openssl.cnf -extensions v3_req
 
 run_coverage_report() {
     echo "Generating coverage xml report..."
