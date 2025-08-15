@@ -7,6 +7,7 @@ TESTS := $(addprefix $(TESTSUITE_DIR)/test,1 2 3 4 5 6 7 8 9)
 .PHONY: all
 all: gps_uploader
 
+.PHONY: gps_uploader
 gps_uploader:
 	gcc -o $@ -g -fsanitize=undefined -fno-sanitize-recover src/gps_uploader.c
 
