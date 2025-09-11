@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
@@ -17,17 +17,41 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
 });
 
-const MapView = () => {
+// Component to handle map bounds updates
+const MapBounds = ({ locations }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (locations && locations.length > 0) {
+      const bounds = locations
+        .filter(loc => loc.latitude !== 0 && loc.longitude !== 0)
+        .map(loc => [loc.latitude, loc.longitude]);
+      
+      if (bounds.length > 0) {
+        map.fitBounds(bounds);
+      }
+    }
+  }, [locations, map]);
+  
+  return null;
+};
+
+const MapView = ({ isAuthenticated, username, password }) => {
   const [locations, setLocations] = useState([]);
 
   useEffect(() => {
     const fetchLocations = async () => {
+      if (!isAuthenticated) {
+        setLocations([]);
+        return;
+      }
+      
       try {
         // Proxy will redirect to API server.
         const response = await axios.get('/locations', {
           auth: {
-            username: "me@me.com",
-            password: "123456"
+            username: username,
+            password: password
           }
         });
         setLocations(response.data.locations);
@@ -37,38 +61,9 @@ const MapView = () => {
     };
 
     fetchLocations();
-  }, []);
+  }, [isAuthenticated, username, password]);
 
-  useEffect(() => {
-    if (locations.length > 0) {
-      const map = L.map('map', {
-        center: [0, 0],
-        zoom: 2,
-        layers: [
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          })
-        ]
-      });
-
-      const markers = L.markerClusterGroup();
-      const boundsArray = locations
-        .filter(loc => loc.latitude !== 0 && loc.longitude !== 0)
-        .map(loc => {
-          const marker = L.marker([loc.latitude, loc.longitude]);
-          marker.bindPopup(`Latitude: ${loc.latitude}, Longitude: ${loc.longitude}`);
-          markers.addLayer(marker);
-          return [loc.latitude, loc.longitude];
-        });
-
-      if (boundsArray.length > 0) {
-        map.addLayer(markers);
-        map.fitBounds(boundsArray);
-      } else {
-        map.setView([0, 0], 2);
-      }
-    }
-  }, [locations]);
+  // Removed duplicate map initialization - using MapContainer component instead
 
   const columns = React.useMemo(
     () => [
@@ -96,12 +91,18 @@ const MapView = () => {
 
   return (
     <div>
-      <div id="map" style={{ height: "600px", width: "100%" }}>
+      {!isAuthenticated && (
+        <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#f0f0f0' }}>
+          Please log in to view GPS telemetry data
+        </div>
+      )}
+      <div style={{ height: "600px", width: "100%" }}>
         <MapContainer center={[0, 0]} zoom={2} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
+          <MapBounds locations={locations} />
           {locations.map((loc, index) => (
             <Marker key={index} position={[loc.latitude, loc.longitude]}>
               <Popup>

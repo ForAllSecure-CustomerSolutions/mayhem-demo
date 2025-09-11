@@ -29,8 +29,9 @@ function App() {
   };
 
   const handleLogout = async () => {
-    setUsername("");
-    setPassword("");
+    // Keep the credentials populated for easy re-login
+    setUsername("me@me.com");
+    setPassword("123456");
     setIsAuthenticated(false);
   };
 
@@ -55,20 +56,17 @@ function App() {
               onChange={(e) => setPassword(e.target.value)}
             />
             <button onClick={handleLogin}>Login</button>
-
           </div>
         )}
+        {loginError && <span className="error">{loginError}</span>}
       </header>
-      {isAuthenticated ? (
-        <div className="content">
-          <MapView />
-        </div>
-      ) : (
-        <div>
-          {loginError && <p className="error">{loginError}</p>}
-          <p className="login-prompt">Please log in to see GPS telemetry.</p>
-        </div>
-      )}
+      <div className="content">
+        <MapView 
+          isAuthenticated={isAuthenticated}
+          username={username}
+          password={password}
+        />
+      </div>
     </div>
   );
 }
