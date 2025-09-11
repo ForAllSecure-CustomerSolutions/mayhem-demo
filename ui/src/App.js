@@ -5,15 +5,16 @@ import MapView from './components/MapView';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('me@me.com');
+  const [password, setPassword] = useState('123456');
   const [loginError, setLoginError] = useState('');
 
 
 
   const handleLogin = async () => {
     try {
-      await axios.get('http://localhost:8000/info', {
+      // Proxy will redirect to API server.
+      await axios.get('/info', {
         auth: {
           username: username,
           password: password

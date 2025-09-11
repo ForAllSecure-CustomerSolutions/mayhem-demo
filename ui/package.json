@@ -2,6 +2,7 @@
   "name": "gps-telemetry-ui",
   "version": "1.0.0",
   "private": true,
+  "proxy": "http://api:8000",
   "dependencies": {
     "axios": "^1.7.3",
     "leaflet": "^1.9.4",

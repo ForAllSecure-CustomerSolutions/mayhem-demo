@@ -23,7 +23,8 @@ const MapView = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/locations', {
+        // Proxy will redirect to API server.
+        const response = await axios.get('/locations', {
           auth: {
             username: "me@me.com",
             password: "123456"

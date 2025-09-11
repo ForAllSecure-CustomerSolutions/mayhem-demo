@@ -73,6 +73,11 @@ def get_current_username(
     )
 
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+
 # Path traversal vulnerability
 @app.get("/info", responses={404: {"description": "Not found"}})
 async def get_info(

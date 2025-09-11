@@ -1,0 +1,20 @@
+# Docker Compose override file for CI environments with coverage enabled
+services:
+  api:
+    command: ["sh", "-c", "coverage run -m uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    volumes:
+      - ./coverage:/app/coverage
+    environment:
+      - CI=true
+    # Add coverage config
+    configs:
+      - source: coveragerc
+        target: /app/.coveragerc
+
+configs:
+  coveragerc:
+    content: |
+      [run]
+      relative_files = True
+      source = app
+      omit = */tests/*
