@@ -9,19 +9,38 @@ and SBOM/SCA vulnerabilities. The architecture consists of:
 - **API service**: FastAPI (Python) with SQL injection, path traversal, and auth bypass vulnerabilities
 - **UI service**: React frontend displaying GPS telemetry data
 - **Redis**: Data storage backend
-  ![GPS Telemetry Image](./gps_telemetry_image.png)
+
+## Quickstart
+
+```
+# Build the demo app
+docker compose up --build -d
+
+# Download mayhem cli
+curl --fail -L https://app.mayhem.security/cli/Linux/install.sh | sh
+
+# Login -- See https://app.mayhem.security/-/installation for creating a token. 
+mayhem login https://app.mayhem.security/  <your token>
+
+# Find vulnerabilities in the car service
+mayhem run car
+
+# Reproduce vulnerabilities locally 
+mayhem download -o results mayhem-demo/car
+
+# Optional: You can also download from other runs, like completed runs
+mayhem download -o results demos/mayhem-demo/car
+
+# Find vulnerabilities in the API
+mapi run mayhem-demo/api 30s http://localhost:8000/openapi.json --url http://localhost:8000 --interactive --basic-auth 'me@me.com:123456'
+```
+
 
 ## Structure and Vulnerabilities
 
-```mermaid
-flowchart LR;
-    Car -->|GPS Data| API;
-    API <--> Redis;
-    API <-->|Points on map| UI;
-```
 
 - **Code Security**: The GPS code is a native app that transmits GPS sensor
-  data to a Cloud API. The source [./car/gps_uploader.c](./car/gps_uploader.c)
+  data to a Cloud API. The source [./car/src/gps_uploader.c](./car/src/gps_uploader.c)
   contains vulnerabilities such as:
 
   - Integer overflow
@@ -43,155 +62,7 @@ flowchart LR;
   and UI. Each is built with OSS components and has vulnerabilities both on and
   off the attack surface.
 
-## Running the App
 
-Make sure you have Docker and Docker Compose installed on your machine and then
-run:
-
-```sh
-docker compose up --build
-```
-
-Then navigate to [http://localhost:3000](http://localhost:3000). In more detail:
-
-- **UI**: [http://localhost:3000](http://localhost:3000). The default username and password is
-  `me@me.com` and `123456`. Written in Javascript React.
-- **API**: [http://localhost:8000](http://localhost:8000). Written in FastAPI (python).
-- **OpenAPI**:
-  [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json).
-  Generated automatically by FastAPI.
-
-**Note** You can add the --watch flag to sync any changes from the UI or API
-files to the running docker container.
-
-**Note 2:** If you've previously run this, please run `docker compose down -v` to
-remove any stale volumes.
-
-## Getting started with Mayhem
-
-### Step 1: Create an account
-
-Let's unleash some Mayhem! The first thing to do is create a free Mayhem account at
-[https://app.mayhem.security](https://app.mayhem.security).
-
-### Step 2: Install the Mayhem CLI
-
-Now that you have an account, you can start using Mayhem in your local environment.
-
-- Install the Mayhem CLIs from
-  [https://app.mayhem.security/-/installation](https://app.mayhem.security/-/installation)
-
-- Next, create an API token at
-  [https://app.mayhem.security/-/settings/user/api-tokens](https://app.mayhem.security/-/settings/user/api-tokens),
-  which is what you’ll use to log in the CLI to the Mayhem server.
-
-- Use the token to log in with your token with `mayhem login https://app.
-mayhem.security <your API token>`
-
-- Mayhem Dynamic SBOM currently has a separate CLI install, and currently
-  only supports Linux. Install by following
-  [https://app.mayhem.security/docs/dynamic-sbom/installation/](https://app.mayhem.security/docs/dynamic-sbom/installation/).
-
-At the end of this, you will have three CLIs:
-
-1. `mayhem`, which runs Mayhem for Code analysis
-2. `mapi`, which runs Mayhem for API analysis
-3. `mdsbom`, which runs Mayhem Dynamic SBOM analysis
-
-Note: All CLIs share authentication information, so you need only log in with
-one CLI.
-
-### Step 3: Clone and run this repo
-
-Get the code running by:
-
-- Cloning this repo with `git clone
-https://github.com/forallsecure-CustomerSolutions/mayhem-demo` and change into
-  the mayhem-demo directory.
-- Build and run the docker images with `docker compose up --build`
-
-### Step 4a: Run Mayhem for API
-
-In this step, you’ll run Mayhem for API to check the demo API server. This step
-uploads the report to Mayhem for viewing, and also produces a local HTML
-report.
-
-1. Make sure you have the code running with `docker compose up --build` and
-   that you can reach the API on [http://localhost:8000](http://localhost:8000).
-
-2. Run `mapi run mayhem-demo/api 1m http://localhost:8000/openapi.json --url
-http://localhost:8000 --html mapi.html --interactive --basic-auth
-"me@me.com:123456" --experimental-rules --ignore-rule
-internal-server-error`
-
-3. That’s it! You can exit when done.
-
-**Details:**
-
-Mayhem for API requires two things: an API to test, and an OpenAPI spec. In
-this example, we scanned the locally running copy of the API, and used the
-OpenAPI spec that is automatically generated by the underlying FastAPI
-framework.
-
-The specific arguments you used were:
-
-- `mayhem-demo/api` is the project name and target name for the app. By
-  default, Mayhem puts results in your private workspace. You will see
-  results in the Mayhem UI under your personal workspace under this project
-  name. If you want the project in a shared workspace, just prefix the path
-  with the workspace name like: `shareworkspace/mayhem-demo/api`
-
-- `http://localhost:8000/openapi.json`
-  the location of the OpenAPI spec. FastAPI automatically generates one for
-  you, as can most frameworks, or write your specification yourself to check
-  your implementation.
-
-- `http://localhost:8000/` is an URL to the running API. The host must be
-  reachable from the host running the `mapi` CLI, but need not be internet
-  accessible.
-
-- `--html mapi.html` says to output a local HTML report called `mapi.html`
-
-- `--interactive` says to run in interactive mode. Note that you can move
-  your cursor through the TUI to dig into results!
-
-- `--basic-auth` tells `mapi` the credentials for the endpoints using basic
-  authentication. `mapi` supports several auth types, and you can find a list
-  with `mapi run --help`.
-
-- `--ignore-rule internal-server-error` says to ignore internal server errors
-  (5xx HTTP response codes). Some users prefer to see these because they show
-  the server has broken code, and some do not.
-
-**TIP:** `mapi` is a superset and more accurate than ZAP API scanner. But we've
-also integrated ZAP support just in case, and even have a docker container with
-both `mapi` and `zap`. Try it out with:
-
-```
-docker run -it -e MAPI_TOKEN <token> forallsecure/mapi:latest run --url 'https://demo-api.mayhem4api.forallsecure.com/api/v3/'  mayhem-demo/api 60  'https://demo-api.mayhem4api.forallsecure.com/api/v3/openapi.json'   --interactive --zap
-```
-
-**Note:** Make sure you run `docker compose down -v` to remove any old volumes from previous
-runs. `mapi` will create new locations each time you run it in redis, and can
-quickly create really long responses.
-
-### Step 4b: Run Mayhem Dynamic SBOM to identify results on the attack surface
-
-Mayhem Dynamic SBOM works by taking in a docker SBOM/SCA report, and outputting
-a new SBOM/SCA report based upon attack surface analysis. We’ll be using `docker
-scout` to generate the SBOM for this demo, though Mayhem integrates with any
-tool that outputs a CycloneDX or SPDX file.
-
-**Pre-requisites:**
-
-- Linux system (more OSes coming shortly)
-- The demo service docker images are available and you know their path. They
-  do not need to be running. (`docker compose build`).
-- You have installed
-  [docker](https://docs.docker.com/engine/install/ubuntu/), are logged into
-  docker (`docker login`) and have [docker
-  scout](https://docs.docker.com/scout/install/) installed.
-- You have `mdsbom` installed and you are logged into Mayhem.
 
 **Steps:**
 
@@ -258,17 +129,9 @@ And that’s it! You should be able to see results for Mayhem for Code in your p
 ## Next Steps
 
 Now that you’ve run Mayhem on this app, let's look at how to get you started on
-your own apps. Here are some great starting points to bookmark:
+your own apps.  We’ve compiled extensive documentation and tutorials online at [https://app.mayhem.security/docs/overview/](https://app.mayhem.security/docs/overview/)
 
-- **Documentation:** We’ve compiled extensive documentation and tutorials online at [https://app.mayhem.security/docs/overview/](https://app.mayhem.security/docs/overview/)
 
-- **Code Examples:** Mayhem for Code programming language examples at
-  [https://github.com/ForAllSecure/mayhem-examples](https://github.com/ForAllSecure/mayhem-examples)
-
-- **OSS Examples:** Sometimes examples are the best way to learn, and we’ve
-  got you covered. View over 1500 repositories that have integrated Mayhem
-  at
-  [https://github.com/orgs/mayhemheroes/repositories](https://github.com/orgs/mayhemheroes/repositories)
 
 ## License
 

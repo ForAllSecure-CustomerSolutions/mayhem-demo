@@ -1,7 +1,9 @@
-project: demos/mayhem-demo
+project: mayhem-demo
 target: car
 advanced_triage: true
-image: dbrumley/car
+image: ghcr.io/forallsecure-customersolutions/mayhem-demo/car:latest
+duration: 1200
+
 tasks:
   - name: exploitability_factors
   - name: regression_testing
@@ -9,4 +11,4 @@ tasks:
   - name: coverage_analysis
 cmds:
   - cmd: /app/gps_uploader @@
-    cwd: /app
+
