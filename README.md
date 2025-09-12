@@ -29,6 +29,8 @@ mayhem run car
 mayhem download -o results demos/mayhem-demo/car-finished
 
 # Replay a crash
+# Should result in...
+# src/gps_uploader.c:37:9: runtime error: index 79927775 out of bounds for type 'char [8]'
 docker run --rm -i ghcr.io/forallsecure-customersolutions/mayhem-demo/car < results/testsuite/fb4f8c935dec4708e39a1f8402caab91e8b038589d3a2f7a725df3e7de2d4449
 
 # Find vulnerabilities in the API
