@@ -136,3 +136,7 @@ docker-compose.override.yml
 __pycache__/
 .docker
 
+
+# Demo ignores
+results/
+car/gps_uploader

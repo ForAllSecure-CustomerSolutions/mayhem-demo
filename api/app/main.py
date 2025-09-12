@@ -47,7 +47,7 @@ def get_current_username(
     logger.info("Login attempt for email: %s", credentials.username)
     cur = con.cursor()
     try:
-        # SQL injection!
+        # Vulnerable SQL injection!
         cur.execute(
             "SELECT * FROM users WHERE email = '%s' and password = '%s'"
             % (credentials.username, credentials.password)
@@ -87,6 +87,7 @@ async def get_info(
     if not isfile("app/" + environment):
         return JSONResponse(status_code=404, content={"message": "Info file not found"})
 
+    # Vulnerable Path Traversal
     with open("app/" + environment) as f:
         return f.readlines()
 
@@ -94,6 +95,8 @@ async def get_info(
 @app.exception_handler(Exception)
 async def unicorn_exception_handler(_: Request, exc: Exception):
     traceback_str = "".join(traceback.format_exception(None, exc, exc.__traceback__))
+
+    # Vulnerable server unexpected exception.
     return JSONResponse(
         status_code=500,
         content={"message": "An unexpected error occurred", "detail": traceback_str},
@@ -105,6 +108,8 @@ async def startup_event():
     """Creates an in-memory database with a user table, and populate it with
     one account"""
     cur = con.cursor()
+
+    # Vulnerable Default Username!
     cur.execute("""CREATE TABLE users (email text, password text)""")
     cur.execute("""INSERT INTO users VALUES ('me@me.com', '123456')""")
     con.commit()
