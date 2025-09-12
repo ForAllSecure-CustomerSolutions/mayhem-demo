@@ -60,67 +60,7 @@ mapi run mayhem-demo/api 30s http://localhost:8000/openapi.json --url http://loc
   and UI. Each is built with OSS components and has vulnerabilities both on and
   off the attack surface.
 
-**Steps:**
 
-1. Run `mdsbom scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif`
-
-2. That’s it! View the results on the Mayhem UI.
-
-**Details:**
-
-The command line about did several things all at once:
-
-1. Built an SBOM and SCA report from `docker scout`
-2. Identified the attack surface in the `api` image.
-3. Reduced the SCA findings to only those items on the attack surface. In our
-   run, 90\% of the `docker scout` SBOM/SCA results were irrelevant to
-   security!
-
-In more detail, the arguments:
-
-- `scout` specified to run docker scout to get the initial SBOM/SCA result.
-  Mayhem supports any SBOM/SCA tool that creates a CycloneDX or SPDX file.
-  You can run `mdsbom help` to see other possibilities, like anchore, trivy,
-  and more generally any source using a standardized format.
-
-- `ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest` is path to
-  the docker image (`docker compose build` will default to this name).
-
-- ``--sca-report-out dsbom-api.sarif` says to output a SARIF format as file
-  `dsbom-api.sarif`.
-
-Tip: You can use `--workspace <name>` to specify a different workspace to
-upload results.
-
-### Step 4C: Run Mayhem for Code to find code vulnerabilities
-
-**Prerequisites**
-You need to have the built docker images from the `docker compose build` step,
-and a registry you can push the images to. You can also use our pre-built
-containers [here](https://github.com/orgs/ForAllSecure-CustomerSolutions/packages?repo_name=mayhem-demo).
-
-**Steps:**
-
-1. Push the docker image to a registry such as Dockerhub or Github Container
-   Registry. If you are an enterprise customer, Mayhem comes with a docker
-   registry built-in.
-
-   ```
-   docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/car:latest <docker id>/mayhem-demo/car:latest
-   docker push <docker id>/mayhem-demo/car:latest
-   ```
-
-2. Start analysis with `mayhem run mayhem-demo/car --image ghcr.io/forallsecure-customersolutions/mayhem-demo/car:latest --duration 1800`
-
-And that’s it! You should be able to see results for Mayhem for Code in your project!
-
-**Details:**
-
-- `run` tells Mayhem to start a run.
-- `--image ghcr.io/forallsecure-customersolutions/mayhem-demo/` tells
-  Mayhem the location of your app's image.
-- `--duration 1800` tells Mayhem to run analysis for up to 30 minutes. (If you
-  leave this off, Mayhem will continually pentest your app.)
 
 ## Next Steps
 
