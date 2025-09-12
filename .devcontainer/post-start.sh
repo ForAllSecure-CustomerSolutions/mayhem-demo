@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+echo "🕰️ Building demo containers. This may take a second."
+docker compose build
 
 # Mayhem auto-login if secret provided
 if [ -n "${MAYHEM_API_KEY:-}" ]; then

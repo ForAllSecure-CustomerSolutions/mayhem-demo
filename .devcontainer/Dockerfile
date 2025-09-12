@@ -23,7 +23,11 @@ RUN curl --fail -L https://app.mayhem.security/cli/Linux/install.sh | sh
 USER vscode
 WORKDIR /workspace
 
-RUN echo 'echo "🔧 Demo Environment Ready!"' >> ~/.bashrc
+# Silence Docker CLI hints via config (robust, not just env var)
+#RUN mkdir -p ~/.docker && printf '%s\n' '{"auths":{},"cliHints":{"enabled":false}}' > ~/.docker/config.json
 
+RUN echo 'echo "🔧 Demo Environment Ready!"' >> ~/.bashrc
+RUN echo 'echo "🎼 Run docker compose up -d to start demo app"' >> ~/.bashrc
+RUN echo 'echo "🚀 Then run README.md on how to run Mayhem"' >>  ~/.bashrc
 # Default command
 CMD ["/bin/bash"]
