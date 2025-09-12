@@ -8,18 +8,32 @@
     }
   },
   "containerEnv": {
+    "XDG_CONFIG_HOME": "/home/vscode/.config",
     "NODE_OPTIONS": "",
-    "DOCKER_CONFIG": "/home/vscode/.docker-nocreds"
+    "DOCKER_CLI_HINTS": "false"
   },
-  "postStartCommand": "mkdir -p ~/.docker-nocreds && echo '{\"auths\":{}}' > ~/.docker-nocreds/config.json",
   "remoteUser": "vscode",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "workspaceFolder": "/workspace",
+  "postStartCommand": "/bin/bash .devcontainer/post-start.sh",
   "forwardPorts": [
     3000,
     8000,
     6379
   ],
+  "portsAttributes": {
+    "3000": {
+      "label": "UI",
+      "onAutoForward": "openBrowser"
+    },
+    "8000": {
+      "label": "API",
+      "onAutoForward": "openBrowser"
+    },
+    "6379": {
+      "label": "Redis"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
