@@ -126,14 +126,19 @@ int main(int argc, char* argv[])
   char line[256];
   int lat = 0, lon = 0;
   double latitude = 0.0, longitude = 0.0;
-  const char* GPS_FILE_PATH = NULL;
   int fd, in_bytes;
 
-  GPS_FILE_PATH = argv[1];
+  const char* GPS_FILE_PATH = argv[1];
+  const char* URL = (argc >= 3) ? argv[2] : getenv("UPLOAD_URL");
 
-  if ((fd = open(GPS_FILE_PATH, O_RDONLY)) == -1) {
-    printf("Couldn't open %s. Check your file path.\n", GPS_FILE_PATH);
-    exit(-1);
+  if (argc >= 2) {
+    if ((fd = open(GPS_FILE_PATH, O_RDONLY)) == -1) {
+      printf("Couldn't open %s. Check your file path.\n", GPS_FILE_PATH);
+      exit(-1);
+    }
+  }
+  else {
+    fd = 0; // stdin
   }
 
   if ((in_bytes = read(fd, line, sizeof(line) - 1)) == -1) {
@@ -145,8 +150,8 @@ int main(int argc, char* argv[])
   parse_lat_lon(line, &lat, &lon);
   vulnerable_c(0, line, lat, lon);
 
-  if (argc == 3) {
-    upload_position(argv[2], (double)lat / (double)1000000, (double)lon / (double)1000000);
+  if (URL && URL[0]) {
+    upload_position(URL, (double)lat / (double)1000000, (double)lon / (double)1000000);
   }
   return 0;
 }

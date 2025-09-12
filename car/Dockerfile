@@ -13,4 +13,4 @@ RUN make
 COPY testsuite /testsuite
 COPY gps_data.txt gps_data.txt
 
-CMD ["/app/gps_uploader", "@@"]
+CMD ["/app/gps_uploader"]

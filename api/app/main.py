@@ -144,6 +144,8 @@ async def receive_location(
     location_data = {"latitude": location.latitude, "longitude": location.longitude}
 
     redis_client.rpush("locations", json.dumps(location_data))
+    # Keep only the last MAX_LOCATIONS items (FIFO - oldest are removed)
+    redis_client.ltrim("locations", -settings.MAX_LOCATIONS, -1)
     return {"message": "Location received"}
 
 
