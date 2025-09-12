@@ -37,6 +37,9 @@ docker run --rm -i ghcr.io/forallsecure-customersolutions/mayhem-demo/car < resu
 mapi run mayhem-demo/api 30s http://localhost:8000/openapi.json --url http://localhost:8000 --interactive --basic-auth 'me@me.com:123456'
 ```
 
+Mayhem integrates with your CICD, as in this [PR](https://github.com/ForAllSecure-CustomerSolutions/mayhem-demo/pull/31) showing Mayhem results to a developer.
+
+
 ## Structure and Vulnerabilities
 
 - **Code Security**: The GPS code is a native app that transmits GPS sensor
@@ -62,7 +65,24 @@ mapi run mayhem-demo/api 30s http://localhost:8000/openapi.json --url http://loc
   and UI. Each is built with OSS components and has vulnerabilities both on and
   off the attack surface.
 
+## Troubleshooting
 
+**Web page not showing** 
+If you don't see the webpage, make sure the services (workspace-api, workspace-redis, workspace-ui) came up properly. To check, run:
+```
+# Check status - This shows all services healthy
+docker compose ps
+NAME                IMAGE                                                           COMMAND                  SERVICE   CREATED          STATUS                    PORTS
+workspace-api-1     ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest   "uvicorn app.main:ap…"   api       11 minutes ago   Up 10 minutes (healthy)   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+workspace-redis-1   redis:latest                                                    "docker-entrypoint.s…"   redis     11 minutes ago   Up 10 minutes             0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+workspace-ui-1      ghcr.io/forallsecure-customersolutions/mayhem-demo/ui:latest    "docker-entrypoint.s…"   ui        10 minutes ago   Up 10 minutes             0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
+```
+
+To fix, try restarting:
+```
+docker compose down # Shut down
+docker compose up -d   # bring back up
+```
 
 ## Next Steps
 
