@@ -1,0 +1,80 @@
+name: Windows CLI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_call:
+    inputs:
+      mayhem_url:
+        description: 'Mayhem URL'
+        required: true
+        default: 'https://app.mayhem.security'
+        type: string
+      workspace:
+        description: 'Mayhem Workspace'
+        required: true
+        default: 'platform-demo'
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    if: github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Set default input values
+        shell: pwsh
+        run: |
+          $mayhemUrl = if ([string]::IsNullOrEmpty("${{ inputs.mayhem_url }}")) { 'https://app.mayhem.security' } else { "${{ inputs.mayhem_url }}" }
+          $workspace = if ([string]::IsNullOrEmpty("${{ inputs.workspace }}")) { 'platform-demo' } else { "${{ inputs.workspace }}" }
+          echo "MAYHEM_URL=$mayhemUrl" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "WORKSPACE=$workspace" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install Mayhem CLI
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://app.mayhem.security/cli/Windows/mayhem.msi" -OutFile "mayhem.msi"
+          Start-Process msiexec.exe -ArgumentList "/i mayhem.msi /quiet /norestart" -Wait
+          echo "MAYHEM_PATH=C:\Program Files (x86)\Mayhem\mayhem.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Authenticate with Mayhem
+        shell: pwsh
+        run: |
+          &$env:MAYHEM_PATH login "$env:MAYHEM_URL" "${{ secrets.MAYHEM_TOKEN }}"
+
+      - name: Build project
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          cd cli
+          msbuild geofencing.sln
+
+      - name: Package the executable
+        shell: pwsh
+        run: |
+          $packageDir = "cli/package"
+          $exePath = "cli/x64/Debug/geofencing.exe"
+          &$env:MAYHEM_PATH package $exePath -o $packageDir
+
+      - name: Copy testsuite files
+        shell: pwsh
+        run: |
+          $testSuiteDir = "cli/package/testsuite"
+          Copy-Item -Path "cli/testsuite/*" -Destination $testSuiteDir -Recurse
+
+
+      - name: Run Mayhem tests
+        shell: pwsh
+        run: |
+          &$env:MAYHEM_PATH run cli/package --owner $env:WORKSPACE --project mayhem-demo --target cli --duration 5m

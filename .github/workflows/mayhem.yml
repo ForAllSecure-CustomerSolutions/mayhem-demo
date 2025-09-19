@@ -5,8 +5,23 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:
-
+  workflow_call:
+    inputs:
+      mayhem_url:
+        description: 'Mayhem URL'
+        required: true
+        default: 'https://app.mayhem.security'
+        type: string
+      workspace:
+        description: 'Mayhem Workspace'
+        required: true
+        default: 'platform-demo'
+        type: string
+    secrets:
+      mayhem-token:
+        description: 'Mayhem Token'
+        required: false
+  workflow_dispatch: 
 env:
   REGISTRY: ghcr.io
 
@@ -16,7 +31,24 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    if: github.event.pull_request.draft == false
+
     steps:
+    - name: Set Mayhem token
+      run: |
+        if [ -z "${{ secrets.mayhem-token }}" ]; then
+          echo "::add-mask::${{ secrets.MAYHEM_TOKEN }}"
+          echo "MAYHEM_TOKEN=${{ secrets.MAYHEM_TOKEN }}" >> $GITHUB_ENV
+        else
+          echo "::add-mask::${{ secrets.mayhem-token }}"
+          echo "MAYHEM_TOKEN=${{ secrets.mayhem-token }}" >> $GITHUB_ENV
+        fi
+
+    - name: Set default inputs if not provided
+      run: |
+        echo "MAYHEM_URL=${{ inputs.mayhem_url || 'https://app.mayhem.security' }}" >> $GITHUB_ENV
+        echo "WORKSPACE=${{ inputs.workspace || 'platform-demo' }}" >> $GITHUB_ENV
+
     - name: lowercase github.repository
       run: echo "REPO_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     
@@ -32,7 +64,7 @@ jobs:
       run: curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
 
     - name: Install mdsbom
-      run: curl -sSL https://app.mayhem.security/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
+      run: curl -sSL $MAYHEM_URL/cli/mdsbom/linux/latest/mdsbom.deb -O && sudo dpkg -i mdsbom.deb && sudo usermod -aG mdsbom $USER 
 
     - name: Update /etc/docker/daemon.json to use mdsbom
       run: |
@@ -52,11 +84,11 @@ jobs:
 
     - name: Setup sync
       run: |
-        echo '[sync]
-        api_token = "${{ secrets.MAYHEM_TOKEN }}"
-        upstream_url = "https://app.mayhem.security/"
-        workspace = "platform-demo"
-        ' | sudo tee -a /etc/mdsbom/config.toml
+        echo "[sync]
+        api_token = \"${{ env.MAYHEM_TOKEN }}\"
+        upstream_url = \"${{ env.MAYHEM_URL }}\"
+        workspace = \"${{ env.WORKSPACE }}\"
+        " | sudo tee -a /etc/mdsbom/config.toml
  
     - name: Restart services
       run: |
@@ -64,7 +96,7 @@ jobs:
         sudo systemctl restart mdsbom || sudo journalctl -xeu mdsbom
 
     - name: MDSBOM login
-      run: mdsbom login https://app.mayhem.security ${{ secrets.MAYHEM_TOKEN }}
+      run: mdsbom login ${{ env.MAYHEM_URL }} ${{ env.MAYHEM_TOKEN }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -77,9 +109,13 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push the app images
+      id: build
       run: |
         docker compose pull --ignore-buildable -q
-        
+
+        # Build car image, with metadata
+        docker build -t ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --metadata-file metadata.json car/
+
         # Push with commit sha
         SHA=${{ github.sha }} docker compose build
         SHA=${{ github.sha }} docker compose push -q
@@ -87,13 +123,22 @@ jobs:
         # Push with latest
         docker compose build
         docker compose push -q
+      env:
+        SOURCE_DATE_EPOCH: 0
+        BUILDX_METADATA_PROVENANCE: max
+        DOCKER_BUILDKIT: 1
 
+    - name: Upload buildkit metadata artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: metadata-${{ github.sha }}
+        path: metadata.json
 
     - name: Bring up the app
       run: SHA=${{ github.sha }} docker compose up -d --wait && sleep 1 && docker ps
 
     - name: Wait for the API to be up
-      run: bash -c 'while ! curl -s http://localhost:8000/openapi.json; do sleep 1; done'
+      run: bash -c 'while ! curl -ks https://localhost:8443/openapi.json; do sleep 1; done'
 
     - name: Start API analysis
       uses: forallsecure/mapi-action@v1
@@ -101,10 +146,11 @@ jobs:
       env:
         MAPI_BASIC_AUTH: "me@me.com:123456"
       with:
-        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        target: platform-demo/mayhem-demo/api
-        api-url: http://localhost:8000
-        api-spec: http://localhost:8000/openapi.json
+        mayhem-url: ${{ env.MAYHEM_URL }}
+        mayhem-token: ${{ env.MAYHEM_TOKEN }}
+        target: ${{ env.WORKSPACE }}/mayhem-demo/api
+        api-url: https://localhost:8443
+        api-spec: https://localhost:8443/openapi.json
         sarif-report: api.sarif
         run-args: |
                   --experimental-rules
@@ -120,10 +166,10 @@ jobs:
     #   uses: forallsecure/mapi-action@v1
     #   continue-on-error: true
     #   with:
-    #     mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-    #     target: platform-demo/mayhem-demo/api-zap
-    #     api-url: http://localhost:8000
-    #     api-spec: http://localhost:8000/openapi.json
+    #     mayhem-token: $MAYHEM_TOKEN
+    #     target: $WORKSPACE/mayhem-demo/api-zap
+    #     api-url: https://localhost:8443
+    #     api-spec: https://localhost:8443/openapi.json
     #     sarif-report: api-zap.sarif
     #     run-args: |
     #       --ignore-rule auth-bypass
@@ -139,8 +185,9 @@ jobs:
     - name: Start Code analysis
       uses: forallsecure/mcode-action@v1
       with:
-        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
-        owner: platform-demo
+        mayhem-url: ${{ env.MAYHEM_URL }}
+        mayhem-token: ${{ env.MAYHEM_TOKEN }}
+        owner: ${{ env.WORKSPACE }}
         args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --duration 600
         sarif-output: code-sarif/
         coverage-output: car-coverage/
@@ -161,6 +208,13 @@ jobs:
         category: Mayhem-for-Code
         checkout_path: ${{ github.workspace }}/car
 
+    - name: Archive Code SARIF report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: car.sarif
+        path: code-sarif/car.sarif
+
     - name: Upload coverage to Codecov
       if: always()
       uses: codecov/codecov-action@v4
@@ -172,52 +226,51 @@ jobs:
         name: mayhem
 
     - name: Bring down the app
-      run: SHA=${{ github.sha }} docker compose down
+      run: SHA=${{ github.sha }} docker compose down -v
 
-    - name: Pause to let mdsbom sync run
-      run: sleep 15 && mdsbom query --workspace platform-demo containers -a
+    # - name: Pause to let mdsbom sync run
+    #   run: sleep 15 && mdsbom query --workspace ${{ env.WORKSPACE }} containers -a
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
       with:
         files: coverage/coverage.xml
         flags: Mayhem-for-API
         fail_ci_if_error: true
 
-    - name: Run Dynamic SBOM scan
-      run: | 
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace platform-demo
-        sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace platform-demo
+    # - name: Run Dynamic SBOM scan
+    #   run: | 
+    #     sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --sca-report-out dsbom-car.sarif --workspace ${{ env.WORKSPACE }}
+    #     sudo -u $USER mdsbom scout ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/api:${{ github.sha }} --sca-report-out dsbom-api.sarif --workspace ${{ env.WORKSPACE }}
 
-    - name: Patch docker scout SARIF report for CodeQL
-      run : |
-        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
-            if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
-            if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif
+    # - name: Patch docker scout SARIF report for CodeQL
+    #   run : |
+    #     jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+    #         if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
+    #         if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
+    #         if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-api.sarif > dsbom-api-patched.sarif
 
-        jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
-            if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
-            if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
-            if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif
+    #     jq 'walk(if type == "object" and has("startLine") and .startLine == 0 then .startLine = 1 else . end |
+    #         if type == "object" and has("endLine") and .endLine == 0 then .endLine = 1 else . end |
+    #         if type == "object" and has("endColumn") and .endColumn == 0 then .endColumn = 1 else . end |
+    #         if type == "object" and has("startColumn") and .startColumn == 0 then .startColumn = 1 else . end)' dsbom-car.sarif > dsbom-car-patched.sarif
 
-    - name: Upload SARIF file
-      id: upload-api
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: dsbom-api-patched.sarif
-        category: Dynamic-SBOM/api
+    # - name: Upload SARIF file
+    #   id: upload-api
+    #   uses: github/codeql-action/upload-sarif@v3
+    #   with:
+    #     sarif_file: dsbom-api-patched.sarif
+    #     category: Dynamic-SBOM/api
 
-    - name: Dismiss issues that were not observed at runtime
-      uses: advanced-security/dismiss-alerts@v1
-      with:
-        # specify a 'sarif-id' and 'sarif-file'
-        sarif-id: ${{ steps.upload-api.outputs.sarif-id }}
-        sarif-file: dsbom-api-patched.sarif
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+    # - name: Dismiss issues that were not observed at runtime
+    #   uses: advanced-security/dismiss-alerts@v1
+    #   with:
+    #     sarif-id: ${{ steps.upload-api.outputs.sarif-id }}
+    #     sarif-file: dsbom-api-patched.sarif
+    #   env:
+    #     GITHUB_TOKEN: "${{ github.token }}"
 
     # Disabled d/t: rejecting SARIF, as there are more related locations per result than allowed (2277 > 1000)
     # - name: Upload SARIF file
@@ -234,4 +287,4 @@ jobs:
     #     sarif-id: ${{ steps.upload-car.outputs.sarif-id }}
     #     sarif-file: dsbom-car-patched.sarif
     #   env:
-    #     GITHUB_TOKEN: ${{ github.token }}
+    #     GITHUB_TOKEN: "${{ github.token }}"

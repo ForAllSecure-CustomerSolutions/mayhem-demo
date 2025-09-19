@@ -94,8 +94,8 @@ int parse_lat_lon(char* line, int* latitude, int* longitude) {
   lat = atoi(fields[2]);
   lon = atoi(fields[4]);
 
-  if (fields[3][0] == 'S') lat = -lat;
-  if (fields[5][0] == 'W') lon = -lon;
+  if (fields[3][0] == 'S') lat = -lat; // Integer overflow when lat = INT_MIN
+  if (fields[5][0] == 'W') lon = -lon; // Integer overflow when lon = INT_MIN
 
 
   *latitude = lat;
@@ -115,7 +115,7 @@ void upload_position(const char* URL, double latitude, double longitude)
 
   printf("Uploading lat %f lon %f to %s\n", latitude, longitude, URL);
   snprintf(command, sizeof(command),
-    "curl -X POST -H \"Content-Type: application/json\"  -u me@me.com:123456 -d '{\"latitude\": %.6f, \"longitude\": %.6f}' %s",
+    "curl -k -X POST -H \"Content-Type: application/json\"  -u me@me.com:123456 -d '{\"latitude\": %.6f, \"longitude\": %.6f}' %s",
     latitude, longitude, URL);
 
   system(command);

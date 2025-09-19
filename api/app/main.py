@@ -8,7 +8,7 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel,  field_validator
 from redis import Redis
@@ -111,6 +111,7 @@ async def startup_event():
 
     # Vulnerable Default Username!
     cur.execute("""CREATE TABLE users (email text, password text)""")
+    cur.execute("""INSERT INTO users VALUES ('admin', 'admin')""")
     cur.execute("""INSERT INTO users VALUES ('me@me.com', '123456')""")
     con.commit()
 
@@ -151,7 +152,12 @@ async def receive_location(
     redis_client.rpush("locations", json.dumps(location_data))
     # Keep only the last MAX_LOCATIONS items (FIFO - oldest are removed)
     redis_client.ltrim("locations", -settings.MAX_LOCATIONS, -1)
-    return {"message": "Location received"}
+
+    html_content = f"""
+    <h2>Location</h2>
+    <p>{location.latitude}, {location.longitude}</p>
+    """
+    return HTMLResponse(content=html_content, status_code=200, headers={"Content-Type": "text/html"})
 
 
 @app.get("/locations")
