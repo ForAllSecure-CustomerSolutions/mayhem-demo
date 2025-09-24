@@ -7,7 +7,7 @@ services:
     depends_on:
       - redis
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "-k", "https://localhost:8443/health"]
       interval: 3600s  # Check only once per hour after startup
       timeout: 3s       # Keep timeout short for quick response
       retries: 1        # Fail fast if needed

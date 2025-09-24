@@ -19,7 +19,7 @@
   "postStartCommand": "/bin/bash .devcontainer/post-start.sh",
   "forwardPorts": [
     3000,
-    8000,
+    8443,
     6379
   ],
   "portsAttributes": {
@@ -27,7 +27,7 @@
       "label": "UI",
       "onAutoForward": "openBrowser"
     },
-    "8000": {
+    "8443": {
       "label": "API",
       "onAutoForward": "openBrowser"
     },

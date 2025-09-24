@@ -10,7 +10,7 @@ COPY src src
 RUN make
 
 # Some demo example GPS data
-COPY testsuite /testsuite
+COPY testsuite ./testsuite
 COPY gps_data.txt gps_data.txt
 
 CMD ["/app/gps_uploader"]

@@ -6,7 +6,11 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster';
 import axios from 'axios';
-import { useTable } from 'react-table';
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+} from '@tanstack/react-table';
 
 // Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -63,17 +67,15 @@ const MapView = ({ isAuthenticated, username, password }) => {
     fetchLocations();
   }, [isAuthenticated, username, password]);
 
-  // Removed duplicate map initialization - using MapContainer component instead
-
   const columns = React.useMemo(
     () => [
       {
-        Header: 'Latitude',
-        accessor: 'latitude',
+        header: 'Latitude',
+        accessorKey: 'latitude',
       },
       {
-        Header: 'Longitude',
-        accessor: 'longitude',
+        header: 'Longitude',
+        accessorKey: 'longitude',
       }
     ],
     []
@@ -81,13 +83,11 @@ const MapView = ({ isAuthenticated, username, password }) => {
 
   const data = React.useMemo(() => locations, [locations]);
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable({ columns, data });
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   return (
     <div>
@@ -113,27 +113,28 @@ const MapView = ({ isAuthenticated, username, password }) => {
         </MapContainer>
       </div>
       <div className="table-container">
-        <table {...getTableProps()} className="telemetry-table">
+        <table className="telemetry-table">
           <thead>
-            {headerGroups.map(headerGroup => (
-              <tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map(column => (
-                  <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+            {table.getHeaderGroups().map(headerGroup => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => (
+                  <th key={header.id}>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
                 ))}
               </tr>
             ))}
           </thead>
-          <tbody {...getTableBodyProps()}>
-            {rows.map(row => {
-              prepareRow(row);
-              return (
-                <tr {...row.getRowProps()}>
-                  {row.cells.map(cell => (
-                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                  ))}
-                </tr>
-              );
-            })}
+          <tbody>
+            {table.getRowModel().rows.map(row => (
+              <tr key={row.id}>
+                {row.getVisibleCells().map(cell => (
+                  <td key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

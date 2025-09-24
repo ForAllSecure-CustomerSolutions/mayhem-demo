@@ -26,13 +26,13 @@ run_coverage_report() {
 
 trap run_coverage_report INT TERM
 
-coverage run -m uvicorn app.main:app \
-    --host 0.0.0.0 --port 8443 \
-    --ssl-keyfile /app/certs/key.pem \
-    --ssl-certfile /app/certs/cert.pem &
+# coverage run -m uvicorn app.main:app \
+#     --host 0.0.0.0 --port 8443 \
+#     --ssl-keyfile /app/certs/key.pem \
+#     --ssl-certfile /app/certs/cert.pem &
 
-PID=$(echo $!)
+# PID=$(echo $!)
 
-while true; do
-  sleep 1
-done
+# while true; do
+#   sleep 1
+# done

@@ -1,4 +1,4 @@
-project: platform-demo/mayhem-demo
+project: mayhem-demo
 target: car
 advanced_triage: true
 image: ghcr.io/forallsecure-customersolutions/mayhem-demo/car:latest
