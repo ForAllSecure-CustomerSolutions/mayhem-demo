@@ -135,7 +135,7 @@ jobs:
         path: metadata.json
 
     - name: Bring up the app
-      run: SHA=${{ github.sha }} docker compose up -d --wait --log-level=debug && sleep 1 && docker ps
+      run: SHA=${{ github.sha }} docker compose  --verbose up -d --wait && sleep 1 && docker ps
 
     - name: Wait for the API to be up
       run: bash -c 'while ! curl -ks https://localhost:8443/openapi.json; do sleep 1; done'
