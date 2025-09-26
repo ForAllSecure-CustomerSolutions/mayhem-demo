@@ -41,7 +41,8 @@
         "ms-python.python",
         "ms-vscode.cpptools",
         "ms-vscode.cmake-tools",
-        "ryanluker.vscode-coverage-gutters"
+	"ryanluker.vscode-coverage-gutters",
+        "ms-vscode.makefile-tools"
       ]
     }
   },
