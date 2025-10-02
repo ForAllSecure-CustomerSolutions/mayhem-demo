@@ -248,8 +248,9 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
   docker run \
           -e DOCKER_USERNAME \
           -e DOCKER_PASSWORD \
-          -e MAYHEM_URL \
+          -e MAYHEM_URL=${MAYHEM_URL} \
           -e MAYHEM_TOKEN \
+          -e API_IMAGE=ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest \
           -v $(pwd)/mdsbom:/mdsbom \
           -it \
           --platform linux/amd64 \
@@ -266,7 +267,7 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
 
   3. Run target container
   ```
-  docker run --runtime=mdsbom ghcr.io/forsallsecure-customersolutions/mayhem-demo/api:latest
+  docker run --runtime=mdsbom ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest
   ```
 
   4. Stop the container with Ctrl-C
@@ -278,7 +279,7 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
 
   6. Run MDSBOM
   ```
-  mdsbom run scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
+  mdsbom scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
   ```    
 
   7. That’s it! You can now view the results on the Mayhem UI.
