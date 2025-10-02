@@ -249,7 +249,7 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
 
   3. Run target container
   ```
-  docker run --runtime=mdsbom ghcr.io/forsallsecure-customersolutions/mayhem-demo/api:latest
+  docker run --runtime=mdsbom ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest
   ```
 
   4. Stop the container with Ctrl-C
