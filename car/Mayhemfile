@@ -1,7 +1,8 @@
-project: platform-demo/mayhem-demo
+project: mayhem-demo
 target: car
 advanced_triage: true
-image: dbrumley/car
+image: ghcr.io/forallsecure-customersolutions/mayhem-demo/car:latest
+
 # Blank out testsuite so each run doesn't use regression testing
 testsuite: 
 duration: 900
@@ -12,4 +13,4 @@ tasks:
   - name: coverage_analysis
 cmds:
   - cmd: /app/gps_uploader @@
-    cwd: /app
+

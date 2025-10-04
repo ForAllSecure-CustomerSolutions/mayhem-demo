@@ -1,21 +1,54 @@
-// .devcontainer/devcontainer.json
 {
-  "name": "C Development Container",
-  "context": "../car",
-  "dockerFile": "../car/Dockerfile",
-  "workspaceFolder": "/app",
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
+  "name": "Mayhem Demo Environment",
+  "context": "..",
+  "dockerFile": "Dockerfile",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": false
+    }
   },
-  "extensions": [
-    "ms-vscode.cpptools", // C++ Extension
-    "ms-vscode.cmake-tools", // CMake Extension
-    "ryanluker.vscode-coverage-gutters" // Coverage Gutters Extension
+  "containerEnv": {
+    "XDG_CONFIG_HOME": "/home/vscode/.config",
+    "NODE_OPTIONS": "",
+    "DOCKER_CLI_HINTS": "false"
+  },
+  "remoteUser": "vscode",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
+  "postStartCommand": "/bin/bash .devcontainer/post-start.sh",
+  "forwardPorts": [
+    3000,
+    8443,
+    6379
   ],
-  "forwardPorts": [],
-  "postCreateCommand": "",
-  "remoteUser": "root",
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached"
-  ]
+  "portsAttributes": {
+    "3000": {
+      "label": "UI",
+      "onAutoForward": "openBrowser"
+    },
+    "8443": {
+      "label": "API",
+      "onAutoForward": "openBrowser"
+    },
+    "6379": {
+      "label": "Redis"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+	"ryanluker.vscode-coverage-gutters",
+        "ms-vscode.makefile-tools"
+      ]
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb",
+    "storage": "32gb"
+  }
 }

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster';
 import axios from 'axios';
-import { useTable } from 'react-table';
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+} from '@tanstack/react-table';
 
 // Fix for default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -17,16 +21,41 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
 });
 
-const MapView = () => {
+// Component to handle map bounds updates
+const MapBounds = ({ locations }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (locations && locations.length > 0) {
+      const bounds = locations
+        .filter(loc => loc.latitude !== 0 && loc.longitude !== 0)
+        .map(loc => [loc.latitude, loc.longitude]);
+      
+      if (bounds.length > 0) {
+        map.fitBounds(bounds);
+      }
+    }
+  }, [locations, map]);
+  
+  return null;
+};
+
+const MapView = ({ isAuthenticated, username, password }) => {
   const [locations, setLocations] = useState([]);
 
   useEffect(() => {
     const fetchLocations = async () => {
+      if (!isAuthenticated) {
+        setLocations([]);
+        return;
+      }
+      
       try {
-        const response = await axios.get('https://localhost:8443/locations', {
+        // Proxy will redirect to API server.
+        const response = await axios.get('/locations', {
           auth: {
-            username: "me@me.com",
-            password: "123456"
+            username: username,
+            password: password
           }
         });
         setLocations(response.data.locations);
@@ -36,48 +65,17 @@ const MapView = () => {
     };
 
     fetchLocations();
-  }, []);
-
-  useEffect(() => {
-    if (locations.length > 0) {
-      const map = L.map('map', {
-        center: [0, 0],
-        zoom: 2,
-        layers: [
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          })
-        ]
-      });
-
-      const markers = L.markerClusterGroup();
-      const boundsArray = locations
-        .filter(loc => loc.latitude !== 0 && loc.longitude !== 0)
-        .map(loc => {
-          const marker = L.marker([loc.latitude, loc.longitude]);
-          marker.bindPopup(`Latitude: ${loc.latitude}, Longitude: ${loc.longitude}`);
-          markers.addLayer(marker);
-          return [loc.latitude, loc.longitude];
-        });
-
-      if (boundsArray.length > 0) {
-        map.addLayer(markers);
-        map.fitBounds(boundsArray);
-      } else {
-        map.setView([0, 0], 2);
-      }
-    }
-  }, [locations]);
+  }, [isAuthenticated, username, password]);
 
   const columns = React.useMemo(
     () => [
       {
-        Header: 'Latitude',
-        accessor: 'latitude',
+        header: 'Latitude',
+        accessorKey: 'latitude',
       },
       {
-        Header: 'Longitude',
-        accessor: 'longitude',
+        header: 'Longitude',
+        accessorKey: 'longitude',
       }
     ],
     []
@@ -85,22 +83,26 @@ const MapView = () => {
 
   const data = React.useMemo(() => locations, [locations]);
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable({ columns, data });
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   return (
     <div>
-      <div id="map" style={{ height: "600px", width: "100%" }}>
+      {!isAuthenticated && (
+        <div style={{ textAlign: 'center', padding: '10px', backgroundColor: '#f0f0f0' }}>
+          Please log in to view GPS telemetry data
+        </div>
+      )}
+      <div style={{ height: "600px", width: "100%" }}>
         <MapContainer center={[0, 0]} zoom={2} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
+          <MapBounds locations={locations} />
           {locations.map((loc, index) => (
             <Marker key={index} position={[loc.latitude, loc.longitude]}>
               <Popup>
@@ -111,27 +113,28 @@ const MapView = () => {
         </MapContainer>
       </div>
       <div className="table-container">
-        <table {...getTableProps()} className="telemetry-table">
+        <table className="telemetry-table">
           <thead>
-            {headerGroups.map(headerGroup => (
-              <tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map(column => (
-                  <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+            {table.getHeaderGroups().map(headerGroup => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => (
+                  <th key={header.id}>
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
                 ))}
               </tr>
             ))}
           </thead>
-          <tbody {...getTableBodyProps()}>
-            {rows.map(row => {
-              prepareRow(row);
-              return (
-                <tr {...row.getRowProps()}>
-                  {row.cells.map(cell => (
-                    <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                  ))}
-                </tr>
-              );
-            })}
+          <tbody>
+            {table.getRowModel().rows.map(row => (
+              <tr key={row.id}>
+                {row.getVisibleCells().map(cell => (
+                  <td key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

@@ -1,43 +1,67 @@
-# Mayhem Demo App Service 
+# Mayhem Demo App Service
 
 Welcome to the Mayhem Demo App!
 
-This demo highlights how Mayhem helps you solve code, API, and SBOM security and stress testing challenges. The app contains:
-  * An on-car GPS service (code security, OSS security)
-  * Transmits data to an API (API security, OSS security)
-  * Stores results in a database (OSS security)
-  * Used by a user UI to display traveled routes  
+The Mayhem Demo Appshowcases security testing capabilities across code, API,
+and SBOM/SCA vulnerabilities. The architecture consists of:
 
-![GPS Telemetry Image](./gps_telemetry_image.png)
+- **Car service**: C-based GPS uploader with intentional memory vulnerabilities
+- **API service**: FastAPI (Python) with SQL injection, path traversal, and auth bypass vulnerabilities
+- **UI service**: React frontend displaying GPS telemetry data
+- **Redis**: Data storage backend
+
+## Quickstart
+
+```
+# Build the demo app
+docker compose up --build -d
+
+# Download mayhem cli
+curl --fail -L https://app.mayhem.security/cli/Linux/install.sh | sh
+
+# Login -- See https://app.mayhem.security/-/installation for creating a token.
+mayhem login https://app.mayhem.security/  <your token>
+
+# Find vulnerabilities in the car service
+mayhem run car
+
+# Download from a completed run
+mayhem download -o car/results demos/mayhem-demo/car-finished
+
+# Replay a crash
+# Should result in...
+# src/gps_uploader.c:37:9: runtime error: index 79927775 out of bounds for type 'char [8]'
+docker run --rm -i ghcr.io/forallsecure-customersolutions/mayhem-demo/car < car/results/testsuite/fb4f8c935dec4708e39a1f8402caab91e8b038589d3a2f7a725df3e7de2d4449
+
+# Find vulnerabilities in the API
+mapi run mayhem-demo/api 30s https://localhost:8443/openapi.json --url https://localhost:8443 --interactive --basic-auth 'me@me.com:123456'
+```
+
+Mayhem integrates with your CICD, as in this [PR](https://github.com/ForAllSecure-CustomerSolutions/mayhem-demo/pull/31) showing Mayhem results to a developer.
+
 
 ## Structure and Vulnerabilities
 
-```mermaid
-flowchart LR;
-    Car -->|GPS Data| API;
-    API <--> Redis;
-    API <-->|Points on map| UI;
-```
-
 - **Code Security**: The GPS code is a native app that transmits GPS sensor
-  data to a Cloud API. The source  [./car/src/gps_uploader.c](./car/src/gps_uploader.c)
+  data to a Cloud API. The source [./car/src/gps_uploader.c](./car/src/gps_uploader.c)
   contains vulnerabilities such as:
-  * Integer overflow
-  * Integer underflow
-  * Stack-based buffer overflow
-  * Heap overflow
-  * Double Free
-  * Use-after-free
-  * Memory leaks
+
+  - Integer overflow
+  - Integer underflow
+  - Stack-based buffer overflow
+  - Heap overflow
+  - Double Free
+  - Use-after-free
+  - Memory leaks
 
 - **API Security**: The cloud API receives GPS data from cars, and services a UI
   for displaying that information. The source
-  [./api/app/main.py](./api/app/main.py) contains vulnerabilities including: 
-  * SQL Injection
-  * Path Traversal 
-  * Authentication bypass
-  * Spec/implementation mismatch.
-   
+  [./api/app/main.py](./api/app/main.py) contains vulnerabilities including:
+  - SQL Injection
+  - Path Traversal
+  - Authentication bypass
+  - Spec/implementation mismatch.
+
 - **SBOM/SCA Security**: There are four images in this repo: redis, car, api,
   and UI. Each is built with OSS components and has vulnerabilities both on and
   off the attack surface.
@@ -61,7 +85,7 @@ Then navigate to [http://localhost:3000](http://localhost:3000). In more detail:
   - **UI**: [http://localhost:3000](http://localhost:3000). The default username and password is
     `me@me.com` and `123456`. Written in Javascript React.
   - **API**: [https://localhost:8443](https://localhost:8443). Written in FastAPI (python).
-  - **OpenAPI**:
+  - **OpenAPI Spec**:
     [https://localhost:8443/openapi.json](https://localhost:8443/openapi.json).
     Generated automatically by FastAPI. 
 
@@ -107,16 +131,8 @@ At the end of this, you will have two CLIs:
 Note: All CLIs share authentication information, so you need only log in with
 one CLI.
 
-### Step 3: Clone and run this repo
-Get the code running by:
 
-  * Cloning this repo with `git clone
-    https://github.com/forallsecure-CustomerSolutions/mayhem-demo` and change into
-    the mayhem-demo directory.  
-  * Build and run the docker images with `docker compose up --build`
-
-
-### Step 4a: Run Mayhem for API
+### Step 3a: Run Mayhem for API
 In this step, you’ll run Mayhem for API to check the demo API server. This step
 uploads the report to Mayhem for viewing, and also produces a local HTML
 report. 
@@ -198,7 +214,7 @@ mapi describe specification api-specs/localhost-8443-full-spec.json
 ```
 
 
-### Step 4b: Run Mayhem Dynamic SBOM to identify results on the attack surface
+### Step 3b: Run Mayhem Dynamic SBOM to identify results on the attack surface
 
 Mayhem Dynamic SBOM works by taking in a docker SBOM/SCA report, and outputting
 a new SBOM/SCA report based upon attack surface analysis. We’ll be using `docker
@@ -213,12 +229,13 @@ tool that outputs a CycloneDX or SPDX file.
   * You have installed
     [docker](https://docs.docker.com/engine/install/ubuntu/), are logged into
     docker (`docker login`) and have [docker
-    scout](https://docs.docker.com/scout/install/) installed. (You may also need to set $DOCKER_USERNAME and $DOCKER_PASSWORD)
+    scout](https://docs.docker.com/scout/install/) installed.
   * You have a Docker username and token, and have set these with 
     `export DOCKER_USERNAME=<your docker username>` and `export DOCKER_PASSWORD=<your docker password>`.
   * You have a Mayhem url and token, and have set these with
   `export MAYHEM_URL=<your Mayhem URL>` and
     `export MAYHEM_TOKEN=<your Mayhem API token>`.
+  * You have the MDSBOM Docker Image downloaded (`docker pull forallsecure/mdsbom:latest`)
 
 _NOTE: For this example, we'll be running `mdsbom` in a docker container (Docker-in-Docker, or DinD). 
 You can also run `mdsbom` directly on your host system by following the instructions for installation 
@@ -231,8 +248,9 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
   docker run \
           -e DOCKER_USERNAME \
           -e DOCKER_PASSWORD \
-          -e MAYHEM_URL \
+          -e MAYHEM_URL=${MAYHEM_URL} \
           -e MAYHEM_TOKEN \
+          -e API_IMAGE=ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest \
           -v $(pwd)/mdsbom:/mdsbom \
           -it \
           --platform linux/amd64 \
@@ -261,7 +279,7 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
 
   6. Run MDSBOM
   ```
-  mdsbom run scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
+  mdsbom scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
   ```    
 
   7. That’s it! You can now view the results on the Mayhem UI.
@@ -294,7 +312,7 @@ upload results.
 Tip: All of these commands are in a script under `mdsbom/run_mdsbom.sh`. You can pass the script to the `docker run`
 in Step 1 in place of the `/bin/ash` command to run the script automatically.
 
-### Step 4C: Run Mayhem for Code to find code vulnerabilities
+### Step 3c: Run Mayhem for Code to find code vulnerabilities
 
 **Prerequisites**
 You need to have the built docker images from the `docker compose build` step,
@@ -322,7 +340,7 @@ And that’s it! You should be able to see results for Mayhem for Code in your p
   - `--duration 1800` tells Mayhem to run analysis for up to 30 minutes. (If you
     leave this off, Mayhem will continually pentest your app.)
 
-### Step 4D: Run Mayhem for Code to analyze Windows applications
+### Step 3d: Run Mayhem for Code to analyze Windows applications
 
 This section demonstrates how to analyze a Windows C++ geofencing application that processes GPS data points to determine if a car is within a predefined boundary. By leveraging Mayhem, this demo can uncover *exploitable* vulnerabilities.
 

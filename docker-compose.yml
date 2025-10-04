@@ -2,12 +2,16 @@ services:
   api:
     build: ./api
     image: "ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest}"
-    volumes:
-      - ./coverage:/app/coverage
     ports:
       - "8443:8443"
     depends_on:
       - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-k", "https://localhost:8443/health"]
+      interval: 3600s  # Check only once per hour after startup
+      timeout: 3s       # Keep timeout short for quick response
+      retries: 1        # Fail fast if needed
+      start_period: 5s  # Give API time to start
 
   ui:
     build: ./ui
@@ -15,17 +19,22 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
   redis:
     image: "redis:latest"
     ports:
-      - "6379:6379"
+      - "6379:6379"          
+    tmpfs:  # Override redis's default anonymous volume mount. 
+      - /data
 
   car:
     platform: linux/amd64
     build: ./car
     image: "ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest}"
-    command: "/app/src/wait-for-it.sh api -- make upload API_HOST=api TESTSUITE_DIR=/testsuite"
+    command: "make upload"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+

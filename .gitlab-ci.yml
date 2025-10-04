@@ -1,0 +1,61 @@
+include:
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+
+image: docker:latest
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - tag
+  - push
+  - test
+
+variables:
+  DOCKER_DRIVER: overlay2
+  GIT_SUBMODULE_STRATEGY: recursive
+  GITLAB_REGISTRY_API_IMAGE: $CI_REGISTRY_IMAGE/api
+  GITLAB_REGISTRY_UI_IMAGE: $CI_REGISTRY_IMAGE/ui
+  GITLAB_REGISTRY_CAR_IMAGE: $CI_REGISTRY_IMAGE/car
+  SHA: $CI_COMMIT_SHA
+
+before_script: # Log in to GitLab Container Registry
+  - echo $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+
+build_api:
+  stage: build
+  script:
+    - docker-compose build api  # Ensure the image is built
+    - echo "Tagging as $GITLAB_REGISTRY_API_IMAGE tag"
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest} $GITLAB_REGISTRY_API_IMAGE:$SHA
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/api:${SHA:-latest} $GITLAB_REGISTRY_API_IMAGE:latest
+    - docker push $GITLAB_REGISTRY_API_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_API_IMAGE:latest
+
+build_ui:
+  stage: build
+  script:
+    - docker-compose build ui  # Ensure the image is built
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/ui:${SHA:-latest} $GITLAB_REGISTRY_UI_IMAGE:$SHA
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/ui:${SHA:-latest} $GITLAB_REGISTRY_UI_IMAGE:latest
+    - docker push $GITLAB_REGISTRY_UI_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_UI_IMAGE:latest
+
+build_car:
+  stage: build
+  script:
+    - docker-compose build car  # Ensure the image is built
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest} $GITLAB_REGISTRY_CAR_IMAGE:$SHA
+    - docker tag ghcr.io/forallsecure-customersolutions/mayhem-demo/car:${SHA:-latest} $GITLAB_REGISTRY_CAR_IMAGE:latest
+    - docker push $GITLAB_REGISTRY_CAR_IMAGE:$SHA
+    - docker push $GITLAB_REGISTRY_CAR_IMAGE:latest
+
+
+container_scanning:
+  inherit:
+    default: false
+  variables:
+    CS_IMAGE: $GITLAB_REGISTRY_API_IMAGE:latest
+
+

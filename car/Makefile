@@ -1,4 +1,4 @@
-API_HOST := localhost
+API_HOST := api
 
 TESTSUITE_DIR := ./testsuite
 
@@ -12,17 +12,17 @@ gps_uploader:
 	gcc -o $@ -g -fsanitize=undefined -fno-sanitize-recover src/gps_uploader.c
 
 .PHONY: test
-test: $(TESTS) gps_uploader
-	@for test in $^; do \
+test: gps_uploader
+	@for test in $(TESTS); do \
 		echo "- Running $$test..."; \
-		./gps_uploader  $$test; \
+		./gps_uploader $$test; \
 	done
 
 .PHONY: upload
-upload: $(TESTS) gps_uploader
-	@for test in $^; do \
+upload: gps_uploader
+	@for test in $(TESTS); do \
 		echo "- Running $$test..."; \
-		./gps_uploader  $$test https://${API_HOST}:8443/location; \
+		./gps_uploader $$test https://${API_HOST}:8443/location; \
 	done
 
 .PHONY: upload

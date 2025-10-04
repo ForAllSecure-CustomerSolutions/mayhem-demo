@@ -10,13 +10,7 @@ COPY src src
 RUN make
 
 # Some demo example GPS data
-COPY testsuite /testsuite
+COPY testsuite ./testsuite
 COPY gps_data.txt gps_data.txt
 
-# Archive of crashers. Not used in analysis
-COPY crashers crashers
-
-CMD ["/app/gps_uploader", "@@"]
-
-
-#CMD ["/app/src/wait-for-it.sh", "api", "--", "make",  "upload"]
+CMD ["/app/gps_uploader"]
