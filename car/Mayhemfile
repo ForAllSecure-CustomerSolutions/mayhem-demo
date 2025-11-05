@@ -3,8 +3,10 @@ target: car
 advanced_triage: true
 image: ghcr.io/forallsecure-customersolutions/mayhem-demo/car:latest
 
-# Blank out testsuite so each run doesn't use regression testing
+# Set the testsuite explicitly to prevent regressions from prior runs affecting the current run
 testsuite: 
+  - file://testsuite
+
 duration: 900
 tasks:
   - name: exploitability_factors

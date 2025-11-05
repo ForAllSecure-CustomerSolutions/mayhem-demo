@@ -188,7 +188,8 @@ jobs:
         mayhem-url: ${{ env.MAYHEM_URL }}
         mayhem-token: ${{ env.MAYHEM_TOKEN }}
         owner: ${{ env.WORKSPACE }}
-        args: -f car/Mayhemfile --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --duration 600
+        package: car
+        args: --image ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/car:${{ github.sha }} --duration 600
         sarif-output: code-sarif/
         coverage-output: car-coverage/
 
