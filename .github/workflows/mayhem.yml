@@ -119,14 +119,16 @@ jobs:
         # Push with commit sha
         SHA=${{ github.sha }} docker compose build
         SHA=${{ github.sha }} docker compose push -q
-        
-        # Push with latest
-        docker compose build
-        docker compose push -q
       env:
         SOURCE_DATE_EPOCH: 0
         BUILDX_METADATA_PROVENANCE: max
         DOCKER_BUILDKIT: 1
+    
+    - name: Push latest image
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker compose build
+        docker compose push -q
 
     - name: Upload buildkit metadata artifact
       uses: actions/upload-artifact@v4
