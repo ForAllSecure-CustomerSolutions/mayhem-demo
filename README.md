@@ -235,6 +235,8 @@ tool that outputs a CycloneDX or SPDX file.
   * You have a Mayhem url and token, and have set these with
   `export MAYHEM_URL=<your Mayhem URL>` and
     `export MAYHEM_TOKEN=<your Mayhem API token>`.
+  * You have optionally set the `WORKSPACE` variable if you want to run in a workspace separate from
+    your currently logged in user.
   * You have the MDSBOM Docker Image downloaded (`docker pull forallsecure/mdsbom:latest`)
 
 _NOTE: For this example, we'll be running `mdsbom` in a docker container (Docker-in-Docker, or DinD). 
@@ -250,6 +252,7 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
           -e DOCKER_PASSWORD \
           -e MAYHEM_URL=${MAYHEM_URL} \
           -e MAYHEM_TOKEN \
+          -e WORKSPACE=${WORKSPACE} \
           -e API_IMAGE=ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest \
           -v $(pwd)/mdsbom:/mdsbom \
           -it \
@@ -260,29 +263,44 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
           forallsecure/mdsbom:latest /bin/ash
   ```
 
-  2. Log into MDSBOM
+  2. Set up local sync:
+  ```
+  cp /mdsbom/config.toml /etc/mdsbom/config.toml
+
+  echo "[sync]" >> /etc/mdsbom/config.toml
+  echo "upstream_url = \"$MAYHEM_URL\"" >> /etc/mdsbom/config.toml
+  echo "api_token = \"$MAYHEM_TOKEN\"" >> /etc/mdsbom/config.toml
+  echo "workspace = \"$WORKSPACE\"" >> /etc/mdsbom/config.toml
+  ```
+
+  3. Log into MDSBOM
   ```
   mdsbom login $MAYHEM_URL $MAYHEM_TOKEN
   ```
 
-  3. Run target container
+  4. Start the MDSBOM server
+  ```
+  mdsbom server > /var/log/mdsbom-server.log &
+  ```
+
+  5. Run target container
   ```
   docker run --runtime=mdsbom ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest
   ```
 
-  4. Stop the container with Ctrl-C
+  6. Stop the container with Ctrl-C
 
-  5. Make sure the container is recorded properly (this should return the container you just ran)
+  7. Make sure the container is recorded properly (this should return the container you just ran)
   ```
   mdsbom query --local containers -a
   ```
 
-  6. Run MDSBOM
+  8. Run MDSBOM
   ```
   mdsbom scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
   ```    
 
-  7. That’s it! You can now view the results on the Mayhem UI.
+  That’s it! You can now view the results on the Mayhem UI.
 
 **Details:**
 
