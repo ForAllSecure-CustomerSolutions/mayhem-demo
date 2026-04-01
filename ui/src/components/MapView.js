@@ -24,6 +24,12 @@ L.Icon.Default.mergeOptions({
 // Component to handle map bounds updates
 const MapBounds = ({ locations }) => {
   const map = useMap();
+
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    crossOrigin: 'anonymous' // Helps with CORS in some environments
+  }).addTo(map);
   
   useEffect(() => {
     if (locations && locations.length > 0) {
