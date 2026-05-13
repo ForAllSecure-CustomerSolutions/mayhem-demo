@@ -6,16 +6,16 @@ import traceback
 from os.path import isfile
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel,  field_validator
+from pydantic import BaseModel, Field, field_validator
 from redis import Redis
 
 from app.config import settings
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 app = FastAPI()
 security = HTTPBasic()
@@ -166,3 +166,34 @@ async def get_locations(
 ):
     locations = [json.loads(loc) for loc in redis_client.lrange("locations", 0, -1)]
     return {"locations": locations}
+
+drivers: dict[str, dict] = {}
+
+class Driver(BaseModel):
+    id: str = Field(examples=["driver-admin", "driver-me"])
+    seat_position: int
+    radio_station: float
+    cabin_temp_c: int
+    
+
+@app.on_event("startup")
+async def seed_drivers():
+    drivers["driver-admin"] = {"id": "driver-admin", "seat_position": 1, "radio_station": 101.5, "cabin_temp_c": 22}
+    drivers["driver-me"] = {"id": "driver-me", "seat_position": 2, "radio_station": 88.1, "cabin_temp_c": 19}
+
+@app.post("/driver", responses={401: {"description": "Unauthorized"}})
+async def set_driver(
+    driver: Driver,
+    _: Annotated[str, Depends(get_current_username)],   # auth required
+):
+    drivers[driver.id] = driver.dict()
+    return {"message": "Driver saved successfully"}
+
+@app.get("/driver/{id}", responses={401: {"description": "Unauthorized"}, 404: {"description": "Driver not found"}})
+async def get_driver(
+    id: Annotated[str, Path(examples=["driver-admin", "driver-me"])],
+    _: Annotated[str, Depends(get_current_username)],   # auth required
+):
+    if id not in drivers:
+        raise HTTPException(status_code=404, detail="Driver not found")
+    return drivers[id]   # ownership is NOT enforced

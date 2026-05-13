@@ -15,8 +15,13 @@ docker run --runtime=mdsbom $API_IMAGE &
 PID=$!
 sleep 5
 kill -INT $PID
-if ! mdsbom query --format csv --local containers -a | grep -q $API_IMAGE; then
-  echo "ERROR: Image $API_IMAGE has not been recorded."
-  exit 1
+if mdsbom query --format csv containers -a | grep -q $API_IMAGE; then
+  mdsbom scout --sca-report-out /tmp/dsbom-api.sarif --full-summary $API_IMAGE
+else
+  echo "WARN: Image $API_IMAGE has not been recorded on server; attempting local scan instead"
+  if ! mdsbom query --local --format csv containers -a | grep -q $API_IMAGE; then
+    echo "ERROR: Image $API_IMAGE has not been recorded locally either; exiting..."
+    exit 1
+  fi
+  mdsbom scout --local --sca-report-out /tmp/dsbom-api.sarif --full-summary $API_IMAGE
 fi
-mdsbom scout --workspace $WORKSPACE --sca-report-out /tmp/dsbom-api.sarif --full-summary $API_IMAGE

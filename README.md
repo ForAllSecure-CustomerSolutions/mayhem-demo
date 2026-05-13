@@ -140,12 +140,29 @@ report.
   1. Make sure you have the code running with `docker compose up --build` and
      that you can reach the API on [https://localhost:8443](https://localhost:8443). 
 
-  2. Run `mapi run mayhem-demo/api 1m https://localhost:8443/openapi.json --url
-     https://localhost:8443 --html mapi.html --interactive --basic-auth
-     "me@me.com:123456" --experimental-rules --ignore-rule
+  2. Run `mapi run mayhem-demo/api 1m https://localhost:8443/openapi.json --url \
+     https://localhost:8443 --html mapi.html --interactive --basic-auth \
+     "me@me.com:123456" --experimental-rules --ignore-rule \
      internal-server-error`
 
   3. That’s it! You can exit when done.
+
+#### Step 3a.1: IDOR Detection
+To detect IDOR, you can use a plugin combined with a list of identities that you'd like
+to detect IDOR for. You can find an example identities list under `scripts/identities.json`,
+and the plugin installation script under `scripts/install_plugin.sh`
+
+  1. Fetch and build the plugin: `scripts/install_plugin.sh`
+
+  2. Run the plugin: `MAPI_IDOR_ALT_IDENTITIES=./scripts/identities.json \
+     MAPI_IDOR_INSECURE_TLS=true \
+     ./plugins/mapi-examples/plugins/rust-idor-plugin/target/release/rust-idor-plugin > /dev/null &`
+
+  3. Run Mayhem and point to the plugin: `mapi run mayhem-demo/api 1m \
+     https://localhost:8443/openapi.json --url https://localhost:8443 --html mapi.html \
+     --interactive --basic-auth "me@me.com:123456" --experimental-rules --ignore-rule \
+     internal-server-error --rewrite-plugin http://localhost:50051 \
+     --classify-plugin http://localhost:50052`
 
 **Details:**
 
@@ -278,7 +295,7 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
   mdsbom login $MAYHEM_URL $MAYHEM_TOKEN
   ```
 
-  4. Start the MDSBOM server
+  4. Start a local MDSBOM server
   ```
   mdsbom server > /var/log/mdsbom-server.log &
   ```
@@ -292,13 +309,15 @@ here: [https://docs.mayhem.security/dynamic-sbom/installation/](https://docs.may
 
   7. Make sure the container is recorded properly (this should return the container you just ran)
   ```
-  mdsbom query --local containers -a
+  mdsbom query containers -a
   ```
+  _Note: If this returns empty, try passing the `--local` flag._
 
   8. Run MDSBOM
   ```
   mdsbom scout ghcr.io/forallsecure-customersolutions/mayhem-demo/api:latest --sca-report-out dsbom-api.sarif
-  ```    
+  ```
+  _Note: If this returns with no recorded images found, try passing the `--local` flag._
 
   That’s it! You can now view the results on the Mayhem UI.
 
