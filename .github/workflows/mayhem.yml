@@ -142,6 +142,15 @@ jobs:
     - name: Wait for the API to be up
       run: bash -c 'while ! curl -ks https://localhost:8443/openapi.json; do sleep 1; done'
 
+    # - name: Start IDOR plugin
+    #   env:
+    #     MAPI_IDOR_ALT_IDENTITIES: ${{ github.workspace }}/scripts/identities.json
+    #     MAPI_IDOR_INSECURE_TLS: "true"
+    #   run: |
+    #     ./scripts/install_plugin.sh
+    #     ./plugins/mapi-examples/plugins/rust-idor-plugin/target/release/rust-idor-plugin > /dev/null &
+    #     echo $! > idor.pid
+
     - name: Start API analysis
       uses: forallsecure/mapi-action@v1
       continue-on-error: true
@@ -158,6 +167,9 @@ jobs:
                   --experimental-rules
                   --ignore-rule
                   internal-server-error
+
+    # - name: Stop IDOR plugin
+    #   run: kill $(cat idor.pid) || true
 
     - name: Upload SARIF file
       uses: github/codeql-action/upload-sarif@v3

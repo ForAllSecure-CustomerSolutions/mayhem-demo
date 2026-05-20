@@ -6,3 +6,4 @@ mapi.sarif
 coverage/
 node_modules/
 package-lock.json
+plugins/
