@@ -1,12 +1,13 @@
 import json
 import logging
 import os
+import re
 import sqlite3
 import traceback
 from os.path import isfile
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Path
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -197,3 +198,41 @@ async def get_driver(
     if id not in drivers:
         raise HTTPException(status_code=404, detail="Driver not found")
     return drivers[id]   # ownership is NOT enforced
+
+
+@app.on_event("startup")
+async def seed_vehicles():
+    """Seed a small fleet table used by the telemetry lookup endpoint."""
+    cur = con.cursor()
+    cur.execute("""CREATE TABLE vehicles (id text, owner_email text, region text)""")
+    cur.execute("""INSERT INTO vehicles VALUES ('FLEET-NA-001', 'me@me.com', 'na')""")
+    cur.execute("""INSERT INTO vehicles VALUES ('FLEET-EU-002', 'admin', 'eu')""")
+    con.commit()
+
+
+# Canonical fleet identifier format. Enforced here in code (not in the OpenAPI
+# spec): every fleet vehicle id is "FLEET-<2 letters>-<3 digits>", e.g. FLEET-NA-001.
+FLEET_ID_RE = re.compile(r"^FLEET-[A-Z]{2}-\d{3}$")
+
+
+@app.get("/telemetry")
+async def get_telemetry(
+    fleet_id: str = Query(..., description="Canonical fleet vehicle identifier"),
+    region: str = "",
+):
+    if not FLEET_ID_RE.fullmatch(fleet_id):
+        raise HTTPException(status_code=400, detail="Invalid fleet_id")
+
+    cur = con.cursor()
+    # Legacy query builder: the optional region filter is concatenated inline
+    # instead of being parameterized.
+    sql = "SELECT id, owner_email, region FROM vehicles WHERE id = '%s'" % fleet_id
+    if region:
+        sql += " AND region = '%s'" % region
+    cur.execute(sql)
+    rows = cur.fetchall()
+    return {
+        "vehicles": [
+            {"id": r[0], "owner_email": r[1], "region": r[2]} for r in rows
+        ]
+    }

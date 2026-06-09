@@ -1,0 +1,32 @@
+{
+  "servers": {
+    "mapi": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--network",
+        "host",
+        "-e",
+        "MAYHEM_TOKEN",
+        "ghcr.io/forallsecure/mcp-server-mapi:onboarding",
+        "uv",
+        "run",
+        "mcp-server-mapi",
+        "mcp"
+      ],
+      "env": {
+        "MAYHEM_TOKEN": "${input:mayhem_token}"
+      },
+      "type": "stdio"
+    }
+  },
+  "inputs": [
+    {
+      "id": "mayhem_token",
+      "type": "promptString",
+      "description": "MAYHEM_TOKEN (Mayhem API key)"
+    }
+  ]
+}
