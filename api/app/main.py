@@ -202,7 +202,7 @@ async def get_driver(
 
 @app.on_event("startup")
 async def seed_vehicles():
-    """Seed a small fleet table used by the telemetry lookup endpoint."""
+    # Seed a small fleet table
     cur = con.cursor()
     cur.execute("""CREATE TABLE vehicles (id text, owner_email text, region text)""")
     cur.execute("""INSERT INTO vehicles VALUES ('FLEET-NA-001', 'me@me.com', 'na')""")
@@ -210,22 +210,20 @@ async def seed_vehicles():
     con.commit()
 
 
-# Canonical fleet identifier format. Enforced here in code (not in the OpenAPI
+# Fleet identifier format. Enforced here in code (not in the OpenAPI
 # spec): every fleet vehicle id is "FLEET-<2 letters>-<3 digits>", e.g. FLEET-NA-001.
 FLEET_ID_RE = re.compile(r"^FLEET-[A-Z]{2}-\d{3}$")
 
 
 @app.get("/telemetry")
 async def get_telemetry(
-    fleet_id: str = Query(..., description="Canonical fleet vehicle identifier"),
+    fleet_id: str = Query(..., description="Fleet vehicle identifier"),
     region: str = "",
 ):
     if not FLEET_ID_RE.fullmatch(fleet_id):
         raise HTTPException(status_code=400, detail="Invalid fleet_id")
 
     cur = con.cursor()
-    # Legacy query builder: the optional region filter is concatenated inline
-    # instead of being parameterized.
     sql = "SELECT id, owner_email, region FROM vehicles WHERE id = '%s'" % fleet_id
     if region:
         sql += " AND region = '%s'" % region
